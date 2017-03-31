@@ -1,91 +1,136 @@
-var database = firebase.database(); 
-
-var select = document.getElementById("product_category");
-
-firebase.database().ref().child("CuaHang").child("-KegQMCMVg-RqDX8_mA-").child("category").on('child_added', snapshot => {
-	var category  = snapshot.val();
-	//alert(category.name);
-  	select.appendChild(new Option(category.name, category.id));
-});
 
 
+var shopId = getCookie("shopId");
+var Shop = "Shop";
+var database = firebase.database();
+var storage = firebase.storage(); 
 
-function addCategoryClick()
-{
-	var category = {
-		id : "",
-		name: document.getElementById("category_name").value,
-		categoryDescription: document.getElementById("category_description").value
-	};
+var app = new Vue({
+	el: '#app',
+	data: {
+		selectedCategory: {},
+	    categories: [],
+	    image: null,
+	    salePrice: '',
+	    salePriceFormat: '',
+	    Product: {
+	    	id: '',
+	    	name: '',
+			barcode: '',
+			categoryName: '',
+			categoryId : '',
+			salePrice: '',
+			importPrice1: 0,
+			importPrice2: 0,
+			productDescription: '',
+			quantity1: 0,
+			quantity2: 0,
+			discount: 0,
+			startDay: '',
+			endDay: '',
+			image: '',
+	    	state: 'Action'
+	    }
+	},
+	watch: {
+	    salePrice: function() {
+	      	this.salePriceFormat = accounting.formatNumber(this.salePrice, 2);
+	    }
+	},
+	methods: {
 
-	if(category.name == "")
-		alert("Miss information");
-	else {
-		var database = firebase.database(); 
-		var key = database.ref().child("CuaHang").child("-KegQMCMVg-RqDX8_mA-").child("category").push().key;
-		category.id = key;
-		database.ref().child("CuaHang").child("-KegQMCMVg-RqDX8_mA-").child("category").child(key).set(category);
-		alert("Add successfull");
+		loadCategory :function (){
+			firebase.database().ref().child(Shop).child(shopId).child("category").on('child_added', snapshot => {
+				var category  = snapshot.val();
+				this.categories.push(category);
+				if(this.categories.length == 1)
+				{
+					this.selectedCategory = category;
+				}
+			});
+		},
+		onFileChange : function (){
+			var input = document.getElementById("product_file");
+		   	if (input.files && input.files[0]) {
+		        var reader = new FileReader();
+
+		        reader.onload = function (e) {
+		            $('#product_image').attr('src', e.target.result);
+		        }
+
+		        reader.readAsDataURL(input.files[0]);
+		    }
+
+		   	this.image = input.files[0];
+		},
+
+		addProduct: function (){
+			this.Product.categoryId = this.selectedCategory.id;
+			this.Product.categoryName = this.selectedCategory.name;
+			this.Product.salePrice = parseFloat(this.salePrice);
+	
+			if(this.image != null)
+			{
+				this.Product.image = this.image.name;
+
+		   		var uploadTask = storage.ref().child('images/'+ shopId+'/Product/'+ this.image.name).put(this.image);
+
+		   		uploadTask.on('state_changed', function(snapshot){
+					// Observe state change events such as progress, pause, and resume
+					// Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+					}, function(error) {
+					 // Handle unsuccessful uploads
+					}, function() {
+					// Handle successful uploads on complete
+					// For instance, get the download URL: https://firebasestorage.googleapis.com/...
+					var downloadURL = uploadTask.snapshot.downloadURL;
+				});
+		   	}
+
+			this.Product.id = database.ref().child(Shop).child(shopId).child("product").push().key;
+			database.ref().child(Shop).child(shopId).child("product").child(this.Product.id).set(this.Product);
+
+			var branchProduct = {
+		    	id: this.Product.id,
+		    	name: this.Product.name,
+				barcode: this.Product.barcode,
+				categoryName: this.Product.categoryName,
+				categoryId : this.Product.categoryId,
+				salePrice: this.Product.salePrice,
+				importPrice1: 0,
+				importPrice2: 0,
+				productDescription: this.Product.productDescription,
+				quantity1: 0,
+				quantity2: 0,
+				discount: 0,
+				startDay: '',
+				endDay: '',
+				image: this.Product.image,
+		    	state: 'Action'
+		    }
+
+			database.ref().child(Shop).child(shopId).child("branch").on('child_added', snapshot => {
+				var branch  = snapshot.val();
+				branchProduct.saleQuantity = 0;
+				branchProduct.branchId = branch.id;
+				branchProduct.branchName = branch.name;
+				console.log(branchProduct);
+				database.ref().child(Shop).child(shopId).child("branchStore").push(branchProduct);
+			});
+			alert("Add successfull");
+
+			$('#product_image').attr('src', '../image/noimageavailable.png');
+			document.getElementById("product_file").value = '';
+			//window.location.reload(true); 
+			this.Product.name = '';
+			this.Product.barcode = '';
+			this.salePrice = '';
+			this.salePriceFormat = '';
+			this.Product.productDescription = '';
+			this.image = null;
+		}
+	},
+	beforeMount(){
+	    this.loadCategory()
 	}
-};
-
-var image = "";
-function addFileClick()
-{
-	var input = document.getElementById("product_file");
-   	if (input.files && input.files[0]) {
-        var reader = new FileReader();
-
-        reader.onload = function (e) {
-            $('#product_image').attr('src', e.target.result);
-        }
-
-        reader.readAsDataURL(input.files[0]);
-    }
-
-   	image = input.files[0];
-}
-
-function addProductClick()
-{
-	var product = {
-		id : "",
-		name: document.getElementById("product_name").value,
-		barcode: document.getElementById("product_barcode").value,
-		interestRate: parseInt(document.getElementById("product_interestRate").value),
-		category: document.getElementById("product_category").options[document.getElementById("product_category").selectedIndex].text,
-		idCategory : document.getElementById("product_category").value,
-		price: 0,
-		productDescription: document.getElementById("product_description").value,
-		quantity: 0,
-		imageName: image.name
-	};
-
-	if(product.name == "" | product.barcode == "" | product.category == "" | product.productDescription == "" | product.imageName == "")
-		alert("Miss information");
-	else {
-		
-		//upload data
-		var database = firebase.database(); 
-		var key = database.ref().child("CuaHang").child("-KegQMCMVg-RqDX8_mA-").child("product").push().key;
-		product.id = key;
-		database.ref().child("CuaHang").child("-KegQMCMVg-RqDX8_mA-").child("product").child(key).set(product);
-
-		//upload image
-		var storage = firebase.storage();
-   		var uploadTask = storage.ref().child('images/-KegQMCMVg-RqDX8_mA-/'+ image.name).put(image);
-
-   		uploadTask.on('state_changed', function(snapshot){
-			// Observe state change events such as progress, pause, and resume
-			// Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-			}, function(error) {
-			 // Handle unsuccessful uploads
-			}, function() {
-			// Handle successful uploads on complete
-			// For instance, get the download URL: https://firebasestorage.googleapis.com/...
-			var downloadURL = uploadTask.snapshot.downloadURL;
-		});
-
-		alert("Add successfull");
-	}
-};
+})

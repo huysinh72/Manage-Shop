@@ -20,12 +20,14 @@ var Product = {
 	id : "",
 	name: "",
 	barcode: "",
-	category: "",
-	interestRate: "",
-	idCategory : "",
-	price: 0,
+	categoryId: "",
+	categoryName : "",
+	sellPrice: 0,
+	importPrice1: 0,
+	importPrice2: 0,
 	productDescription: "",
-	quantity: "",
+	quantity1: 0,
+	quantity2: 0,
 	linkImage: ""
 }
 
@@ -51,9 +53,36 @@ var ImportBill = {
 	providerName : ""
 }
 
-var sum = 0;
-		firebase.database().ref().child("CuaHang").child(keyStore).child("sumProduct").once('value', snapshot => {
-			sum = snapshot.val();
-		});
+// Employee
+var Employee = {
+	id: "",
+	name: "",
+	phone: "",
+	address: "",
+	identity: "",
+	username: "",
+	pass: "",
+	type: "",
+	branchName: "",
+	branchId: ""
+}
 
-		database.ref().child("CuaHang").child(keyStore).child("sumProduct").set(sum+1);
+
+var BranchStore = {
+	id: "",
+	productId : "",
+	productName : "",
+	branchName: "",
+	branchId: ""
+	barcode: "",
+	categoryName: "",
+	categoryId : "",
+	sellPrice: 0,
+	importPrice1: 0,
+	importPrice2: 0,
+	productDescription: "",
+	quantity1: 0,
+	quantity2: 0,
+	linkImage: ""
+}
+

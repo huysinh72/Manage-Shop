@@ -28,6 +28,9 @@
 
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.6.3/css/bootstrap-select.min.css" />
 
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -43,83 +46,98 @@
 
         <!-- Navigation -->
        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-                <!-- Brand and toggle get grouped for better mobile display -->
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="index.html">Manage Shop</a>
-                </div>
-                <!-- Top Menu Items -->
-                <ul class="nav navbar-right top-nav">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header ">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand custom-text" href="index.html" style="font-size:150%; color: white; margin-top: 5% "> <b> SHOP MANAGER </b></a>
 
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> John Smith <b class="caret"></b></a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a href="#"><i class="fa fa-fw fa-user"></i> Profile</a>
+            </div>
+            <!-- Top Menu Items -->
+            <ul class="nav navbar-right top-nav">
+
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> John Smith <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="#"><i class="fa fa-fw fa-user"></i> Profile</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="login.html"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <!-- Sidebar Menu Items - These collapse to the responsive navigation menu on small screens -->
+            <div class="collapse navbar-collapse navbar-ex1-collapse ">
+                <ul class="nav navbar-nav side-nav">
+                    <li>
+                         <a href="javascript:;" data-toggle="collapse" data-target="#report"> <i class="fa fa-fw fa-bar-chart-o"></i> <b> Report </b><i class="fa fa-fw fa-caret-down"></i></a>
+                         <ul id="report" class="collapse">
+                            <li >
+                                <a href="report_revenue.html"> Revenue report  </a>
                             </li>
-                            <li class="divider"></li>
                             <li>
-                                <a href="#"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
+                                <a href="report_profit.html">Profit report</a>
+                            </li>
+                            <li>
+                                <a href="report_branch.html">Branch report</a>
+                            </li>
+                            <li>
+                                <a href="report_category.html">Category report</a>
+                            </li>
+                            <li>
+                                <a href="report_product.html">Product report</a>
+                            </li>
+                            <li>
+                                <a href="report_employee.html">Employee report</a>
+                            </li>
+                                   
+                        </ul>
+                    </li>
+
+                    <li class="active">
+                        <a href="import.html"><i class="fa fa-fw fa-sign-in"></i><b> Import </b> </a>
+                    </li>
+                    <li>
+                        <a href="branch.html"><i class="fa fa-fw fa-home"></i><b> Branch  </b></a>
+                    </li>
+                    <li>
+                        <a href="provider.html"><i class="fa fa-fw fa-user"></i><b> Provider </b></a>
+                    </li>
+
+                    <li>
+                        <a href="javascript:;" data-toggle="collapse" data-target="#product">
+                            <i class="fa fa-fw fa-tags"></i> <b> Products </b><i class="fa fa-fw fa-caret-down"></i>
+                        </a>
+                        <ul id="product" class="collapse">
+                            <li>
+                                <a href="product.html"> List products</a>
+                            </li>
+                            <li>
+                                <a href="add_product.html"> Add product</a>
+                            </li>
+                            <li>
+                                <a href="category.html"> Category</a>
                             </li>
                         </ul>
                     </li>
+
+                    <li>
+                        <a href="distribution.html"><i class="fa fa-fw fa-sitemap"></i> <b> Distribution </b></a>
+                    </li>
+                    <li>
+                        <a href="employee.html"><i class="fa fa-fw fa-user"></i> <b> Employee </b> </a>
+                    </li>
                 </ul>
-                <!-- Sidebar Menu Items - These collapse to the responsive navigation menu on small screens -->
-                <div class="collapse navbar-collapse navbar-ex1-collapse">
-                    <ul class="nav navbar-nav side-nav">
-                        <li>
-                             <a href="javascript:;" data-toggle="collapse" data-target="#report"> <i class="fa fa-fw fa-bar-chart-o"></i> Report  <i class="fa fa-fw fa-caret-down"></i></a>
-                             <ul id="report" class="collapse">
-                                <li>
-                                    <a href="reportday.html">Report by day</a>
-                                </li>
-                                <li>
-                                    <a href="reportbranch.html">Report by branch</a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="active">
-                            <a href="import.html"><i class="fa fa-fw fa-sign-in"></i> Import</a>
-                        </li>
-                        <li>
-                            <a href="branch.html"><i class="fa fa-fw fa-home"></i> Branch</a>
-                        </li>
-                        <li>
-                            <a href="provider.html"><i class="fa fa-fw fa-user"></i> Provider</a>
-                        </li>
-
-                        <li>
-                            <a href="javascript:;" data-toggle="collapse" data-target="#product">
-                                <i class="fa fa-fw fa-tags"></i> Products  <i class="fa fa-fw fa-caret-down"></i>
-                            </a>
-                            <ul id="product" class="collapse">
-                                <li>
-                                    <a href="listproduct.html"> List products</a>
-                                </li>
-                                <li>
-                                    <a href="addproduct.html"> Add product</a>
-                                </li>
-                                <li>
-                                    <a href="category.html"> Category</a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li>
-                            <a href="distribution.html"><i class="fa fa-fw fa-sitemap"></i> Distribution</a>
-                        </li>
-                        <li>
-                            <a href="employee.html"><i class="fa fa-fw fa-user"></i> Employee</a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            </div>
+        </nav>
 
         <div id="page-wrapper">
 
@@ -137,66 +155,68 @@
                      <div class="col-lg-4">
                         <h2>Import</h2>
                          <div class="panel panel-default">
-                            <div class="panel-body">
-                                <form role="form">
+                            <div class="panel-body" id="app">
+                                <form role="form" v-on:submit.prevent="importProduct">
                                     <fieldset>
                                         <div class="form-group">
                                             <label>Product name</label>
-                                            <select class="form-control" id="select_product">
-                                            <!--list product-->
+                                            <select class="form-control" v-model="selectedProduct">
+                                                <option v-for="product in products" :value="product">{{product.name}}</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
                                             <label>Quantity</label>
-                                             <input class="form-control" placeholder="Enter number" id="input_quantity">
+                                             <input type="number" class="form-control" placeholder="Enter number" v-model="ImportBill.quantity" required>
                                         </div>
                                         <div class="form-group">
                                             <label>Product price</label>
-                                            <input class="form-control" placeholder="Enter price" id="input_price">
+                                            <input type="number" class="form-control" placeholder="Enter price" v-model="price" required>
+                                            <input class="form-control" disabled="true" v-model="priceFormat">
                                         </div>
                                         <div class="form-group">
                                             <label>Provider</label>
-                                            <select class="form-control" id="select_provider"> 
-                                            <!--list provider-->
+                                            <select class="form-control" v-model="selectedProvider">
+                                                <option v-for="provider in providers" :value="provider">{{provider.name}}</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <button type="button" class="btn btn-success" name="import" onclick="importClick()">Import</button>
+                                            <input type="submit" class="btn btn-success" value="Import product">
                                         </div>
                                         <div class="form-group">
                                                 <label>Import file</label>
-                                                <input type="file">
+                                                <input type="file" >
                                         </div>
 
                                     </fieldset>
                                 </form>
                             </div>
                         </div>
-                       
-
                     </div> 
                     <div class="col-lg-8">
                         <h2>Import history</h2>
-                        <div class="panel panel-default">
-                            <div class="panel-body">
-                                <form role="form">
-                                    <fieldset>
-                                        <table width="100%" class="table table-striped table-bordered table-hover" id="list_importBill">
-                                            <thead>
-                                                <tr>
-                                                    <th>Product</th>
-                                                    <th>Quantity</th>
-                                                    <th>Price</th>
-                                                    <th>Time</th>
-                                                    <th>Edit</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                
-                                            </tbody>
-                                        </table>
-                                    </fieldset>
-                                </form>
+                        <div class="table-responsive">
+                            <div class="panel panel-default">
+                                <div class="panel-body">
+                                    <form role="form">
+                                        <fieldset>
+                                            <table width="100%" class="table table-striped table-bordered table-hover" id="table_importBill">
+                                                <thead>
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Product</th>
+                                                        <th>Quantity</th>
+                                                        <th>Import price</th>
+                                                        <th>Time</th>
+                                                        <th>Provider</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    
+                                                </tbody>
+                                            </table>
+                                        </fieldset>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div> 
@@ -224,6 +244,10 @@
     <script src="../js/plugins/datatables-responsive/dataTables.responsive.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.6.3/js/bootstrap-select.min.js"></script>
 
+    <script src="../js/accounting.min.js"></script>
+
+    <script src="https://unpkg.com/vue"></script>
+
     <script src="https://www.gstatic.com/firebasejs/3.7.0/firebase.js"></script>
     <script>
       // Initialize Firebase
@@ -237,7 +261,9 @@
       firebase.initializeApp(config);
     </script>
 
-    <script src="../js/handleimport.js"></script>
+    <script src="../js/cookie.js"></script>
+     <script src="../js/datetime.js"></script>
+    <script src="../js/handle_import.js"></script>
 
 </body>
 
