@@ -1,6 +1,22 @@
 var shopId = getCookie("shopId");
+if(shopId == null)
+	window.location.href='login.html?preUrl='+window.location.href;
 var Shop = "Shop";
 var database = firebase.database(); 
+
+$('#table_distribution').DataTable({
+    "columnDefs": [
+      { className: "text-right", "targets": [2,3,4] },
+
+    ]
+});
+
+$('#table_distributionHistory').DataTable({
+    "columnDefs": [
+      { className: "text-right", "targets": [3] },
+
+    ]
+});
 
 
 var table_distribution = $('#table_distribution').DataTable();
@@ -11,6 +27,8 @@ var list_distribution = [];
 var keyBranchProducts = [];
 var countProduct = 1;
 var countDistribution = 1;
+var branches = [];
+var saleQuantities = [];
 
 
 var app = new Vue({
@@ -18,13 +36,18 @@ var app = new Vue({
 	data: {
 		selectedProduct: {},
 	    products: [],
+	    selectedDistributionType: {},
+	    distributions: ['Equal distribution', 'Optimal distribution'],
 	    importTimes : ['Recent import time', 'Old import time'],
 	   	selectedImportTime: '',
-	   	quantity: 0
+	   	quantity: 0,
+	   	quantityDisplay: 0
 	},
 	methods: {
 		loadData :function (){
+			this.products = [];
 			this.selectedImportTime = this.importTimes[0];
+			this.selectedDistributionType = this.distributions[0];
 			database.ref().child(Shop).child(shopId).child("product").on('child_added', snapshot => {
 				var product = snapshot.val();
 				if(product.quantity1 > 0 | product.quantity2 > 0)
@@ -34,12 +57,49 @@ var app = new Vue({
 					{
 						this.selectedProduct = product;
 						this.quantity = product.quantity1;
-						this.loadDistribution();
-
+						this.quantityDisplay = this.quantity;
+						
 					}
 				}
 					
 			});
+			endDate = getCurrentDate();
+			startDate = getBeforeDate(endDate, 30);
+
+			firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate).endAt(endDate).once('value', snapshot => {       
+                snapshot.forEach(function(childSnapshot) {
+                	invoice = childSnapshot.val();
+
+                	exist = 0;
+                	for(i = 0; i < branches.length; i++)
+                		if (branches[i].id == childSnapshot.child("branchId").val())
+                		{
+                			for(j = 1; j < invoice.product.length; j++)
+                			{
+                				if (branches[i].product[invoice.product[j].id] == null)
+                					branches[i].product[invoice.product[j].id] = invoice.product[j].quantity1 + invoice.product[j].quantity2;
+                				else
+                					branches[i].product[invoice.product[j].id] += invoice.product[j].quantity1 + invoice.product[j].quantity2;
+                			}
+                			exist = 1;
+                		}
+                	if(exist == 0)
+                	{
+                		branch = {};
+                		branch.id = invoice.branchId;
+                		branch.name = invoice.branchName;
+                		branch.product = [];
+                		for(j = 1; j < invoice.product.length; j++)
+                				branch.product[invoice.product[j].id] = invoice.product[j].quantity1 + invoice.product[j].quantity2;
+                		
+                		branches.push(branch);
+                	}
+                });
+                this.loadDistribution();
+                
+            });
+			
+			
 			this.loadDistributionHistory();
 		},
 		loadDistributionHistory: function(){
@@ -48,10 +108,13 @@ var app = new Vue({
 			database.ref().child(Shop).child(shopId).child("distribution").limitToLast(100).on('child_added', snapshot => {
 				var distribution = snapshot.val();
 				list_distribution.push(distribution);
+
 				table_distributionHistory.row.add([countDistribution ,distribution.branchName, distribution.productName, distribution.quantity, distribution.time, distribution.state, createInputElementTableDistributionHistory(countDistribution++)]).draw();
+				
 			});
 		},
 		loadDistribution: function (){
+			saleQuantities = [];
 			table_distribution.clear().draw();
 			list_product = [];
 			countProduct = 1;
@@ -61,7 +124,16 @@ var app = new Vue({
 				      	var product  = childSnapshot.val();
 				      	keyBranchProducts.push(childSnapshot.key);
 						list_product.push(product);
-						table_distribution.row.add([countProduct,product.branchName, product.saleQuantity, product.quantity2, product.quantity1, createInputElementTableDistribution(countProduct, product.quantity2)]).draw();
+						saleQuantity = 0;
+
+						for(i = 0; i < branches.length; i++)
+							if(branches[i].id == product.branchId)
+							{
+								if(branches[i].product[product.id] != null)
+									saleQuantity = branches[i].product[product.id];
+							}
+						saleQuantities.push(saleQuantity);
+						table_distribution.row.add([countProduct,product.branchName, saleQuantity, product.quantity2, product.quantity1, createInputElementTableDistribution(countProduct, product.quantity2)]).draw();
 				  		countProduct ++;
 				  	});
 				});
@@ -71,7 +143,7 @@ var app = new Vue({
 				this.quantity = this.selectedProduct.quantity1;
 			else
 				this.quantity = this.selectedProduct.quantity2;
-
+			this.quantityDisplay = this.quantity;
 			this.loadDistribution();
 
 		},
@@ -84,7 +156,13 @@ var app = new Vue({
 			distributionHistory.quantity = product.quantity1;
 			distributionHistory.importTime = importTime;
 			distributionHistory.state = "Shipping";
-			distributionHistory.time = getCurrentDate();
+			distributionHistory.time = getCurrentDateAndTime();
+
+			if(this.selectedImportTime == this.importTimes[0])
+				distributionHistory.price = product.importPrice1;
+			else
+				distributionHistory.price = product.importPrice2;
+
 			distributionHistory.id = database.ref().child(Shop).child(shopId).child("distribution").push().key;
 			database.ref().child(Shop).child(shopId).child("distribution").child(distributionHistory.id).set(distributionHistory);
 		},
@@ -122,10 +200,10 @@ var app = new Vue({
 			else
 				database.ref().child(Shop).child(shopId).child("product").child(this.selectedProduct.id).child("quantity2").set(this.quantity);
 
-			this.loadDistribution();
-			alert("Distribute successfull");
+			this.loadData()
+			showToastSuccess('Distribute successfull !!');
 		},
-		autoDistribution: function (){
+		equalDistribution: function(){
 			var aver = 0;
 			for(i = 1; i < countProduct; i++ )
 			{
@@ -141,7 +219,49 @@ var app = new Vue({
 					remainder = 0;
 				}
 			}
+			this.quantityDisplay = 0;
+		},
+		activeDistribution: function (){
+			
+			if(this.selectedDistributionType == this.distributions[0])
+			{
+				this.equalDistribution();
+			}
+			else
+			{
+				var sum = 0;
+				for(i = 0; i < saleQuantities.length; i++)
+					sum += saleQuantities[i];
 
+				if(sum==0)
+					this.equalDistribution();
+				else
+				{
+					var remainder = 0;
+					for(i = 0; i < saleQuantities.length; i++)
+						remainder += parseInt(saleQuantities[i]/sum*this.quantity);
+
+					remainder = this.quantity - remainder;
+					
+					for(i = 1; i < countProduct; i++)
+					{
+						if(document.getElementById(""+i).disabled == false)
+						{	
+							if(saleQuantities[i-1] > 0)
+							{
+								document.getElementById(""+i).value = parseInt(saleQuantities[i-1]/sum*this.quantity)+ remainder;
+								remainder = 0;
+							}
+						}
+					}
+				}
+				this.quantityDisplay = 0;
+
+			}
+		},
+		onDistributionTypeChange: function(){
+			this.quantityDisplay = this.quantity;
+			this.loadDistribution();
 		}
 	},
 	beforeMount(){
@@ -151,8 +271,8 @@ var app = new Vue({
 
 function updateQuatity(id)
 {
-	if (document.getElementById(value).value == "")
-		document.getElementById(value).value = 0;;
+	if (document.getElementById(id).value == "")
+		document.getElementById(id).value = 0;
 	var sum = 0;
 	for(i = 1; i < countProduct; i++ )
 	{
@@ -161,9 +281,11 @@ function updateQuatity(id)
 	
 	if (sum > app.quantity)
 	{
-		alert("The total your distribution quantity was over");
+		showToastWarning("The total your distribution quantity was over");
 		document.getElementById(id).value = 0;
 	}
+	else
+		app.quantityDisplay = app.quantity - sum;
 }
 
 function removeDistribution(id)
@@ -185,7 +307,7 @@ function removeDistribution(id)
 	database.ref().child(Shop).child(shopId).child("distribution").child(list_distribution[id].id).remove();
 	
 	window.location.reload(false);
-	alert("Remove successfull");
+	showToastSuccess('Remove successfull category !!');
 
 }
 

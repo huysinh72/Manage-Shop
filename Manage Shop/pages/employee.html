@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Admin - Branch</title>
+    <title>Shop Manager - Employee</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="../css/bootstrap.min.css" rel="stylesheet">
@@ -17,8 +17,8 @@
     <!-- Custom CSS -->
     <link href="../css/sb-admin.css" rel="stylesheet">
 
-    <!-- Custom Fonts -->
     <link href="../css/plugins/jquery-ui.css" rel="stylesheet">
+    <link href="../css/plugins/jquery.toast.css" rel="stylesheet">
 
     <link href="../css/plugins/jquery-ui.theme.css" rel="stylesheet">
     
@@ -42,7 +42,7 @@
     <div id="wrapper">
 
         <!-- Navigation -->
-      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header ">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -65,7 +65,7 @@
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="login.html"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
+                            <a href="login.html" onclick="eraseCookie('shopId')"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
                         </li>
                     </ul>
                 </li>
@@ -77,6 +77,9 @@
                     <li>
                          <a href="javascript:;" data-toggle="collapse" data-target="#report"> <i class="fa fa-fw fa-bar-chart-o"></i> <b> Report </b><i class="fa fa-fw fa-caret-down"></i></a>
                          <ul id="report" class="collapse">
+                            <li >
+                                <a href="report_today.html"> Today report  </a>
+                            </li>
                             <li >
                                 <a href="report_revenue.html"> Revenue report  </a>
                             </li>
@@ -100,22 +103,12 @@
                     </li>
 
                     <li>
-                        <a href="import.html"><i class="fa fa-fw fa-sign-in"></i><b> Import </b> </a>
-                    </li>
-                    <li>
-                        <a href="branch.html"><i class="fa fa-fw fa-home"></i><b> Branch  </b></a>
-                    </li>
-                    <li>
-                        <a href="provider.html"><i class="fa fa-fw fa-user"></i><b> Provider </b></a>
-                    </li>
-
-                    <li>
                         <a href="javascript:;" data-toggle="collapse" data-target="#product">
                             <i class="fa fa-fw fa-tags"></i> <b> Products </b><i class="fa fa-fw fa-caret-down"></i>
                         </a>
                         <ul id="product" class="collapse">
                             <li>
-                                <a href="product.html"> List products</a>
+                                <a href="product.html"> Products</a>
                             </li>
                             <li>
                                 <a href="add_product.html"> Add product</a>
@@ -125,13 +118,31 @@
                             </li>
                         </ul>
                     </li>
-
+                    <li>
+                        <a href="import.html"><i class="fa fa-fw fa-sign-in"></i><b> Import </b> </a>
+                    </li>
                     <li>
                         <a href="distribution.html"><i class="fa fa-fw fa-sitemap"></i> <b> Distribution </b></a>
                     </li>
-                    <li class="active">
+                    <li>
+                        <a href="invoice.html"><i class="fa fa-fw fa-user"></i> <b> invoice </b> </a>
+                    </li>
+                    <li>
+                        <a href="branch_transactions.html"><i class="fa fa-fw fa-user"></i> <b> Branch transactions </b> </a>
+                    </li>
+                    <li class="employee">
                         <a href="employee.html"><i class="fa fa-fw fa-user"></i> <b> Employee </b> </a>
                     </li>
+                    <li>
+                        <a href="branch.html"><i class="fa fa-fw fa-home"></i><b> Branch  </b></a>
+                    </li>
+                    <li>
+                        <a href="customer.html"><i class="fa fa-fw fa-user"></i><b> Customer </b></a>
+                    </li>
+                    <li>
+                        <a href="provider.html"><i class="fa fa-fw fa-user"></i><b> Provider </b></a>
+                    </li>
+                    
                 </ul>
             </div>
         </nav>
@@ -153,8 +164,15 @@
                                     <input class="form-control" placeholder="Enter name" v-model="Employee.name" required data-validation-required-message="">
                                 </div>
                                 <div class="form-group">
+                                    <label>Sex</label>
+                                    <select class="form-control" v-model="Employee.sex">
+                                        <option>Male</option>
+                                        <option>Female</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
                                     <label>Birthday</label>
-                                    <input class="form-control" placeholder="YY/MM/DD" v-model="Employee.birthday" required data-validation-required-message="">
+                                    <input type="text" class="form-control" placeholder="MM/DD/YY" id="datepickerBirthday1">
                                 </div>
                                 <div class="form-group">
                                     <label>Number phone</label>
@@ -193,12 +211,12 @@
                                 <div class="form-group">
                                     <label>State</label>
                                     <select class="form-control" v-model="selectedState">
-                                        <option v-for="state in states" :value="type">{{ state }}</option>
+                                        <option v-for="state in states" :value="state">{{ state }}</option>
                                     </select>
                                 </div>
 
                                 <div class="form-group">
-                                    <label>Product image</label>
+                                    <label>Employee image</label>
                                     <input type="file" id="product_file_edit" @change="onFileChange"><br>
                                     <img src="../image/noimageavailable.png" alt="HTML5 Icon" width="256" height="256" id ="product_image_edit">
                                 </div> 
@@ -206,13 +224,33 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                       
+                        <button type="button" class="btn btn-danger" v-on:click="showConfirmDialog">Remove</button>
                         <button type="button" class="btn btn-primary" v-on:click="saveChange">Save changes</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
                 </div>
               </div>
             </div>
-           
+
+            <div class="modal fade bs-example-modal-sm" id="confirmDialog" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+              <div class="modal-dialog modal-sm" role="document">
+                <div class="modal-content">
+                    <div class="modal-header" >
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h3 class="modal-title" id="myLargeModalLabel">Confirm</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure to remove it ?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" v-on:click="remove">Yes</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+                       
+                    </div>
+                </div>
+              </div>
+            </div>
             <div class="container-fluid">
 
                 <!-- Page Heading -->
@@ -265,15 +303,22 @@
                                         <div class="row">
                                             <div class="col-lg-6">
                                                 <div class="form-group">
-                                                    <label>Employee name</label>
+                                                    <label>Name</label>
                                                     <input class="form-control" placeholder="Enter name" v-model="Employee.name" required>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label>Birthday</label>
-                                                    <input class="form-control" placeholder="YY/MM/DD" v-model="Employee.birthday" required data-validation-required-message="">
+                                                    <label>Sex</label>
+                                                    <select class="form-control" v-model="Employee.sex">
+                                                        <option>Male</option>
+                                                        <option>Female</option>
+                                                    </select>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label>Number phone</label>
+                                                    <label>Birthday</label>
+                                                    <input type="text" class="form-control" placeholder="MM/DD/YY" id="datepickerBirthday">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Phone</label>
                                                     <input class="form-control" placeholder="Enter number" v-model="Employee.phone" required data-validation-required-message="">
                                                 </div>
                                                 <div class="form-group">
@@ -301,14 +346,14 @@
                                                     </select>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label>Employee type</label>
+                                                    <label>Type</label>
                                                     <select class="form-control" v-model="selectedType">
                                                         <option v-for="type in types" :value="type">{{ type }}</option>
                                                     </select>
                                                 </div>
 
                                                 <div class="form-group">
-                                                    <label>Product image</label>
+                                                    <label>Image</label>
                                                     <input type="file" id="product_file" @change="onFileChange"><br>
                                                     <img src="../image/noimageavailable.png" alt="HTML5 Icon" width="256" height="256" id ="product_image">
                                                 </div> 
@@ -337,6 +382,8 @@
 
     <!-- Bootstrap Core JavaScript -->
     <script src="../js/jquery.js"></script>
+    <script src="../js/jquery.toast.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="../js/bootstrap.min.js"></script>
    
     <script src="../js/plugins/datatables/js/jquery.dataTables.min.js"></script>
@@ -357,7 +404,7 @@
       };
       firebase.initializeApp(config);
     </script>
-
+    <script src="../js/function.js"></script>
     <script src="../js/cookie.js"></script>
     <script src="../js/handle_employee.js"></script>
 

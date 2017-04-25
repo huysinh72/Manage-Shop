@@ -1,15 +1,17 @@
 var shopId = getCookie("shopId");
+if(shopId == null)
+	window.location.href='login.html?preUrl='+window.location.href;
 var Shop = "Shop";
 var database = firebase.database(); 
 
 var list_provider = [];
 var table_provider = $('#table_provider').DataTable();
 var count = 1;
-
+var index  = 0;
 firebase.database().ref().child(Shop).child(shopId).child("provider").on('child_added', snapshot => {
 	var provider  = snapshot.val();
   	list_provider.push(provider);
-	table_provider.row.add([count++, provider.name, provider.phone, provider.email, provider.address, provider.providerDescription]).draw();
+	table_provider.row.add([count++, addHyperlink(provider.name), provider.phone, provider.email, provider.address, provider.providerDescription]).draw();
 });
 
 var app = new Vue({
@@ -35,7 +37,7 @@ var app = new Vue({
 			this.Provider.email = '';
 			this.Provider.providerDescription = '';
 		
-			alert("Add successfull");
+			showToastSuccess('Add successfull provider !!');
 		}
 	}
 })
@@ -54,40 +56,47 @@ var dialogEdit = new Vue({
 			$('#dialog').modal('hide');
 		},
 		reload : function () {
-			list_provider[index] = this.Provider;
+			
 			table_provider.clear().draw();
 			count = 1;
 			for(var i in list_provider)
 			{	
 				var provider = list_provider[i];
-				table_provider.row.add([count++, provider.name, provider.phone, provider.email, provider.address, provider.providerDescription]).draw();
+				table_provider.row.add([count++, addHyperlink(provider.name), provider.phone, provider.email, provider.address, provider.providerDescription]).draw();
 			}
 		},
 		saveChange : function (){		
 			database.ref().child(Shop).child(shopId).child("provider").child(this.Provider.id).set(this.Provider);
-
+			list_provider[index] = this.Provider;
 			this.reload();
 
-			alert("Save successfull");
+			showToastSuccess('Save successfull !!');
 			this.closeDialog();
 		},
+		showConfirmDialog: function(){
+			$('#confirmDialog').modal('show');
+		},
 		remove : function() {
-
 			database.ref().child(Shop).child(shopId).child("provider").child(this.Provider.id).remove();
 
 			list_provider.splice(index, 1);
-			table_provider.clear().draw();
-			count = 1;
-			for(var i in list_provider)
-			{	
-				var provider = list_provider[i];
-				table_provider.row.add([count++, provider.name, provider.phone, provider.email, provider.address, provider.providerDescription]).draw();
-			}
-
-			alert("Remove successfull");
+			this.reload();
+			
+			showToastSuccess('Remove successfull !!');
+			$('#confirmDialog').modal('hide');
 			this.closeDialog();
 		}
 
+	}
+})
+
+
+var confirmDialog = new Vue({
+	el: '#confirmDialog',
+	methods: {
+		remove: function(){
+			dialogEdit.remove();
+		}
 	}
 })
 
@@ -97,10 +106,5 @@ $('#table_provider tbody').on( 'click', 'tr', function (e) {
 	dialogEdit.loadData(list_provider[index]);
 
 	$('#dialog').modal('show');
-		
-	//$('#wrapper').append('<div id="over"></div>');
-    //$('#over').fadeIn(300);
-
-	//dialog.dialog("open");
-
+	
 });

@@ -1,11 +1,29 @@
 
 var shopId = getCookie("shopId");
+if(shopId == null)
+	window.location.href='login.html?preUrl='+window.location.href;
+
 var Shop = "Shop";
 var database = firebase.database();
 
-
 var list_importBill = [];
+$('#table_importBill').DataTable({
+    "columnDefs": [
+      { className: "text-right", "targets": [2,3] },
+
+    ]
+});
+
+$('#table_importFile').DataTable({
+    "columnDefs": [
+      { className: "text-right", "targets": [3,4] },
+
+    ]
+});
+
 var table_importBill = $('#table_importBill').DataTable();
+var table_importFile = $('#table_importFile').DataTable();
+
 var count = 1;
 
 firebase.database().ref().child(Shop).child(shopId).child("importBill").limitToLast(100).on('child_added', snapshot => {
@@ -62,10 +80,38 @@ var app = new Vue({
 					
 			});
 		},
+		pushData: function (importBill, product){
+
+				importBill.id = database.ref().child(Shop).child(shopId).child("importBill").push().key;
+	
+				database.ref().child(Shop).child(shopId).child("importBill").child(importBill.id).set(importBill);
+
+				database.ref().child(Shop).child(shopId).child("product").child(importBill.productId).child("quantity2").set(product.quantity1);
+
+				database.ref().child(Shop).child(shopId).child("product").child(importBill.productId).child("quantity1").set(importBill.quantity);
+
+				database.ref().child(Shop).child(shopId).child("product").child(importBill.productId).child("importPrice2").set(product.importPrice1);
+
+				database.ref().child(Shop).child(shopId).child("product").child(importBill.productId).child("importPrice1").set(importBill.price);
+
+				for(j = 0; j < app.products.length; j++)
+       			{
+       				if(this.products[j].barcode == product.barcode )
+       				{
+       					this.products[j].quantity2 = product.quantity1;
+       					this.products[j].quantity1 = importBill.quantity;
+       					this.products[j].importPrice2 = product.importPrice1;
+       					this.products[j].importPrice1 = importBill.price;
+       					break;
+       				}
+ 
+       			}
+		},
 		importProduct: function (){
+	
 			if(this.selectedProduct.quantity2 > 0)
 			{
-				alert("Store was full \n You distribute down the branches, please");
+				showToastWarning("This product is still in stock. Please check and distribute it to branches");
 			}
 			else
 			{
@@ -77,18 +123,8 @@ var app = new Vue({
 				this.ImportBill.price = parseFloat(this.price);
 				this.ImportBill.quantity = parseInt(this.ImportBill.quantity);
 
-				this.ImportBill.id = database.ref().child(Shop).child(shopId).child("importBill").push().key;
-				database.ref().child(Shop).child(shopId).child("importBill").child(this.ImportBill.id).set(this.ImportBill);
-
-				database.ref().child(Shop).child(shopId).child("product").child(this.ImportBill.productId).child("quantity2").set(this.selectedProduct.quantity1);
-
-				database.ref().child(Shop).child(shopId).child("product").child(this.ImportBill.productId).child("quantity1").set(this.ImportBill.quantity);
-
-				database.ref().child(Shop).child(shopId).child("product").child(this.ImportBill.productId).child("importPrice2").set(this.selectedProduct.importPrice1);
-
-				database.ref().child(Shop).child(shopId).child("product").child(this.ImportBill.productId).child("importPrice1").set(this.ImportBill.price);
-
-				alert("Import successfull");
+				this.pushData(this.ImportBill, this.selectedProduct);
+				showToastSuccess('Import successfull product !!!');
 			}
 		}
 	},
@@ -97,86 +133,105 @@ var app = new Vue({
 	}
 })
 
+var warning = new Vue({
+	el: '#warning',
+	data:{
+		warning :''	
+	},
+})
 
 
-
-
-/*
-
-var select_product = document.getElementById("select_product");
-var list_product = [];
-firebase.database().ref().child(Shop).child(shopId).child("product").on('child_added', snapshot => {
-    var product  = snapshot.val();
- 	list_product.push(product);
-    select_product.appendChild(new Option(product.name, list_product.length-1));
-});
-
-var select_provider = document.getElementById("select_provider");
-
-firebase.database().ref().child(Shop).child(shopId).child("provider").on('child_added', snapshot => {
-    var provider  = snapshot.val();
-    select_provider.appendChild(new Option(provider.name, provider.id));
-});
-
-firebase.database().ref().child(Shop).child(shopId).child("importBill").on('child_added', snapshot => {
-	var importBill  = snapshot.val();
-  	row = "<tr><td>" + importBill.productName + "</td><td>" + importBill.quantity + "</td><td>" + importBill.price + "</td><td>" + importBill.time + "</td>" + "<td><button type=\"button\" class=\"btn btn-sm btn-success\">Edit</button></td>"+"</tr>"; 
-  	$( row ).appendTo( "#list_importBill tbody");
-  // ...
-});
-
-
-function getCurrentDate()
+var dataImportFile = [];
+function importFile()
 {
-	var dateObj = new Date();
-	var month = dateObj.getUTCMonth() + 1; //months from 1-12
-	var day = dateObj.getUTCDate();
-	var year = dateObj.getUTCFullYear();
-	if(month < 10)
-		month = "0" + month;
-	if(day < 10)
-		day = "0" + day;
+	if (warning.warning != '')
+	{
+		showToastWarning("You can not import this file. Let check warning again !!!");
+	}
+	else
+	{
+		var importBill= {
+	    	id: '',
+	    	productName: '',
+	    	productId: '',
+	    	providerName: '',
+	    	providerId: '',
+	    	time: '',
+	    	price: '',
+	    	quantity: ''
+	    }
+	    for(i = 0; i < dataImportFile.length; i++)
+	    	if (dataImportFile[i].Quantity > 0)
+		    {
+			    importBill.productId = dataImportFile[i].id;
+			    importBill.productName = dataImportFile[i].Name;
+			    importBill.providerName = dataImportFile[i].Provider;
+			    importBill.price = dataImportFile[i].ImportPrice;
+			    importBill.quantity = dataImportFile[i].Quantity;
+			    importBill.time = getCurrentDate();
 
-	newdate = year + "/" + month + "/" + day;
-	return newdate;
-};
+			    app.pushData(importBill, app.products[dataImportFile[i].index]);
+			}
 
-function importClick()
+		showToastSuccess('Import successfull file !!');
+		$('#dialog').modal('hide');
+	}
+	
+
+}
+
+function onFileChange(event)
+{	
+	dataImportFile = [];
+	var countData = 1;
+	table_importFile.clear().draw();
+	warning.warning = '';
+    alasql('SELECT * FROM FILE(?,{headers:true})',[event],function(data){
+    	dataImportFile = data;
+
+       	for(i = 0; i < data.length; i++)
+       		if(data[i].Quantity > 0)
+       		{	
+       			for(j = 0; j < app.products.length; j++)
+       			{
+       				if(app.products[j].barcode == data[i].Barcode )
+       				{
+       					dataImportFile[i].id = app.products[j].id;
+       					dataImportFile[i].index = j; 
+       					if (app.products[j].quantity2 > 0)
+       						warning.warning = data[i].Name + " - " + warning.warning;
+       				}
+ 
+       			}
+       			if(data[i].Provider == null)
+       				data[i].Provider = '';
+
+        		table_importFile.row.add([countData++, data[i].Name,data[i].Barcode, data[i].Quantity, accounting.formatNumber(data[i].ImportPrice), data[i].Provider]).draw();
+    		}
+    	if(warning.warning != '')
+    		warning.warning += "is still in stock";
+    	dataImportFile = data;
+        $('#dialog').modal('show');
+        document.getElementById("importFile").value = '';
+    });  
+}
+
+function getImportSampleFile()
 {
-	var product_index = document.getElementById("select_product").value;
-	var importBill = {
-		id : "",
-		productId : list_product[product_index].id,
-		productName : document.getElementById("select_product").options[document.getElementById("select_product").selectedIndex].text,
-		price : parseFloat(document.getElementById("input_price").value),
-		quantity : parseInt(document.getElementById("input_quantity").value),
-		time : getCurrentDate(),
-		providerId : document.getElementById("select_provider").value,
-		providerName : document.getElementById("select_provider").options[document.getElementById("select_provider").selectedIndex].text
+
+	var samples = [];
+	for(i = 0; i < app.products.length; i ++)
+	{
+		var sample = {};
+		sample.Name = app.products[i].name;
+		sample.Barcode = app.products[i].barcode;
+		sample.Quantity = 0;
+		sample.ImportPrice = 0;
+		samples.push(sample);
 	}
-
-	if(importBill.price == "" | importBill.quantity == "" | importBill.productId == "" )
-		alert("Miss information");
-	else {
-		var key = database.ref().child(Shop).child(shopId).child("importBill").push().key;
-		importBill.id = key;
-		database.ref().child(Shop).child(shopId).child("importBill").child(key).set(importBill);
-
-		database.ref().child(Shop).child(shopId).child("product").child(importBill.productId).child("quantity2").set(list_product[product_index].quantity1);
-
-		database.ref().child(Shop).child(shopId).child("product").child(importBill.productId).child("quantity1").set(importBill.quantity);
-
-		database.ref().child(Shop).child(shopId).child("product").child(importBill.productId).child("importPrice2").set(list_product[product_index].importPrice1);
-
-		database.ref().child(Shop).child(shopId).child("product").child(importBill.productId).child("importPrice1").set(importBill.price);
-
-		list_product[product_index].quantity1 = importBill.quantity;
-		list_product[product_index].importPrice1 = impportBill.price;
-
-		//database.ref().child(Shop).child(keyStore).child("product").child(importBill.productId).child("sellPrice").set(importBill.price*(1 + list_product[product_index].interestRate));
+	//var aa = [ { name:'Sinh', id: 1 }, { name: 'B', id: 2 }, { name: 'C', id: 3 } ];
+	alasql('SELECT * INTO XLSX("Import sample.xlsx",{headers:true}) FROM ?',[samples]);
+}
 
 
-		alert("Add successfull");
-	}
-};*/
 

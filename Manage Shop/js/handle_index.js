@@ -38,7 +38,7 @@ var app = new Vue({
           var user = snapshot.val();
           if(user != null)
           {
-            alert("Your email was used");
+            showToastWarning("Your email was used");
             this.resetForm();
             return;
           }
@@ -46,16 +46,17 @@ var app = new Vue({
           {
             if(this.User.password != this.reEnterPassword)
             {
-              alert("password not match");
+              showToastWarning("Password not match");
               return;
             }
 
             var key = database.ref().child(Shop).push().key;
+            database.ref().child(Shop).child(key).child("productNumber").set(0);
             this.User.shopId = key;
 
             database.ref().child(User).push(this.User);
 
-            alert(this.User.shopName + " was created");
+            showToastSuccess(this.User.shopName + " shop was created");
             this.resetForm();
           }
         });

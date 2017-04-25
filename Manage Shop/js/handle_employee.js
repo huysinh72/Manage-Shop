@@ -1,4 +1,6 @@
 var shopId = getCookie("shopId");
+if(shopId == null)
+	window.location.href='login.html?preUrl='+window.location.href;
 var Shop = "Shop";
 var database = firebase.database();
 var storage = firebase.storage(); 
@@ -6,12 +8,9 @@ var storage = firebase.storage();
 var list_employee = [];
 var table_employee = $('#table_employee').DataTable();
 var count = 1;
+var index = 0;
 
-firebase.database().ref().child(Shop).child(shopId).child("employee").on('child_added', snapshot => {
-	var employee  = snapshot.val();
-  	list_employee.push(employee);
-	table_employee.row.add([count++, employee.name, employee.username, employee.phone, employee.address, employee.branchName, employee.type, employee.state]).draw();
-});
+
 
 var app = new Vue({
 	el: '#app',
@@ -25,6 +24,7 @@ var app = new Vue({
 	    	id: '',
 	    	name: '',
 	    	identity: '',
+	    	sex: 'Male',
 	    	birthday: '',
 	    	phone: '',
 	    	address: '',
@@ -34,10 +34,20 @@ var app = new Vue({
 	    	branchName: '',
 	    	type: '',
 	    	image: '',
-	    	state: 'Action'
+	    	state: 'Active'
 	    }
 	},
 	methods: {
+		loadData: function(){
+			var count = 1;
+			table_employee.clear().draw();
+			list_employee = [];
+			firebase.database().ref().child(Shop).child(shopId).child("employee").on('child_added', snapshot => {
+				var employee  = snapshot.val();
+			  	list_employee.push(employee);
+				table_employee.row.add([count++, addHyperlink(employee.name), employee.username, employee.phone, employee.address, employee.branchName, employee.type, employee.state]).draw();
+			});
+		},
 		loadBranches :function (){
 			database.ref().child(Shop).child(shopId).child("branch").on('child_added', snapshot => {
 				var branch  = snapshot.val();
@@ -64,12 +74,7 @@ var app = new Vue({
 		   	this.image = input.files[0];
 		},
 
-		addEmployee: function (){
-			this.Employee.branchId = this.selectedBranch.id;
-			this.Employee.branchName = this.selectedBranch.name;
-			this.Employee.type = this.selectedType;
-
-			
+		pushEmployee: function (){
 			if(this.image != null)
 			{	
 			
@@ -92,12 +97,6 @@ var app = new Vue({
 			this.Employee.id = database.ref().child(Shop).child(shopId).child("employee").push().key;
 			database.ref().child(Shop).child(shopId).child("employee").child(this.Employee.id).set(this.Employee);
 
-			if(this.Employee.type == 'Manager')
-			{
-				database.ref().child(Shop).child(shopId).child("branch").child(this.selectedBranch.id).child("managerId").set(this.Employee.id);
-				database.ref().child(Shop).child(shopId).child("branch").child(this.selectedBranch.id).child("managerName").set(this.Employee.name);
-			}
-
 			this.Employee.name = '';
 			this.Employee.identity = '';
 			this.Employee.birthday = '';
@@ -108,14 +107,47 @@ var app = new Vue({
 			this.image = null;
 			$('#product_image').attr('src', '../image/noimageavailable.png');
 			document.getElementById("product_file").value = '';
-			alert("Add successfull");
+			showToastSuccess('Add successfull employee !!');
+		},
+		addEmployee: function (){
+			this.Employee.branchId = this.selectedBranch.id;
+			this.Employee.branchName = this.selectedBranch.name;
+			this.Employee.type = this.selectedType;
+			this.Employee.birthday = formatDateMMDDYYtoYYMMDD(document.getElementById("datepickerBirthday").value);
+			
+			if(this.Employee.type == 'Manager')
+			{
+				database.ref().child(Shop).child(shopId).child("branch").orderByChild("id").equalTo(this.Employee.branchId)
+				.once('value', snapshot => {
+					var check = 0;
+					snapshot.forEach(function(childSnapshot) {
+						if(childSnapshot.child("managerId").val() != '')
+							check = 1;
+					});	
+					if(check == 1){
+						showToastWarning(this.Employee.branchName +' already have a manager!!');
+					}
+					else{
+						database.ref().child(Shop).child(shopId).child("branch").child(this.Employee.branchId).child("managerId").set(this.Employee.id);
+						database.ref().child(Shop).child(shopId).child("branch").child(this.Employee.branchId).child("managerName").set(this.Employee.name);
+						this.pushEmployee();
+					}
+				});
+				
+			}else {
+				this.pushEmployee();
+			}
+			
+
+			
+			
 		}
 	},
 	beforeMount(){
+		this.loadData();
 	    this.loadBranches()
 	}
 })
-
 
 
 var dialogEdit = new Vue({
@@ -125,7 +157,7 @@ var dialogEdit = new Vue({
 	    branches: [],
 	    types:['Salesman', 'Manager'],
 	    selectedType: '',
-	    states:['Action', 'Stop'],
+	    states:['Active', 'Stop'],
 	    selectedState: '',
 	    image: {},
 	    Employee: {}
@@ -137,6 +169,8 @@ var dialogEdit = new Vue({
 			this.selectedType = employee.type;
 			this.selectedState = employee.state;
 			this.branches = [];
+			document.getElementById("datepickerBirthday1").value = formatDateYYMMDDtoMMDDYY(this.Employee.birthday);
+
 			database.ref().child(Shop).child(shopId).child("branch").on('child_added', snapshot => {
 				var branch  = snapshot.val();
 				this.branches.push(branch);
@@ -146,7 +180,7 @@ var dialogEdit = new Vue({
 					this.selectedBranch = branch;
 				}
 			});
-
+			$('#product_image_edit').attr('src', '../image/noimageavailable.png');
 			storage.ref().child('images/'+ shopId+'/Employee/'+ this.Employee.image).getDownloadURL().then(function(url) {
 				var xhr = new XMLHttpRequest();
 				xhr.responseType = 'blob';
@@ -180,8 +214,7 @@ var dialogEdit = new Vue({
 		closeDialog : function (){
 			$('#dialog').modal('hide');
 		},
-		saveChange : function (){
-						
+		saveData: function (){
 			if(document.getElementById("product_file_edit").value != "")
 			{
 				this.Employee.image = this.image.name;
@@ -204,17 +237,16 @@ var dialogEdit = new Vue({
 			if (this.Employee.branchId != this.selectedBranch.id)
 			{
 				
-
 				if(this.selectedType == 'Manager')
 				{
 					database.ref().child(Shop).child(shopId).child("branch").child(this.selectedBranch.id).child("managerId").set(this.Employee.id);
 					database.ref().child(Shop).child(shopId).child("branch").child(this.selectedBranch.id).child("managerName").set(this.Employee.name);
 				}
 
-				if(this.Employee.type  == 'Manager')
+				if(this.Employee.type  == 'Manager' && this.Employee.branchId != '')
 				{
-					database.ref().child(Shop).child(shopId).child("branch").child(this.Employee.branchId).child("managerId").set("");
-					database.ref().child(Shop).child(shopId).child("branch").child(this.Employee.branchId).child("managerName").set("");
+					database.ref().child(Shop).child(shopId).child("branch").child(this.Employee.branchId).child("managerId").set('');
+					database.ref().child(Shop).child(shopId).child("branch").child(this.Employee.branchId).child("managerName").set('');
 				}
 				this.Employee.type = this.selectedType;
 				this.Employee.branchId = this.selectedBranch.id;
@@ -235,21 +267,82 @@ var dialogEdit = new Vue({
 				}
 				else
 				{
-					database.ref().child(Shop).child(shopId).child("branch").child(this.selectedBranch.id).child("managerId").set("");
-					database.ref().child(Shop).child(shopId).child("branch").child(this.selectedBranch.id).child("managerName").set("");
+					database.ref().child(Shop).child(shopId).child("branch").child(this.selectedBranch.id).child("managerId").set('');
+					database.ref().child(Shop).child(shopId).child("branch").child(this.selectedBranch.id).child("managerName").set('');
 				}
 			}
-
-			console.log('')
+			this.Employee.birthday = formatDateMMDDYYtoYYMMDD(document.getElementById("datepickerBirthday1").value);
 			database.ref().child(Shop).child(shopId).child("employee").child(this.Employee.id).set(this.Employee);
+			app.loadData();
+			showToastSuccess('Save successfull !!');
+			this.closeDialog();
+		},
+		saveChange : function (){
 
-			alert("Save successfull")
+			if(this.selectedType == 'Manager' && (this.Employee.branchId != this.selectedBranch.id | this.Employee.type != this.selectedType))
+			{
+				database.ref().child(Shop).child(shopId).child("branch").orderByChild("id").equalTo(this.selectedBranch.id)
+				.once('value', snapshot => {
+					var check = 0;
+					snapshot.forEach(function(childSnapshot) {
+						if(childSnapshot.child("managerId").val() != '')
+							check = 1;
+					});	
+					if(check == 1){
+						showToastWarning(this.Employee.branchName +' already have a manager!!');
+						return;
+					}else {
+						this.saveData();
+					}
+				});
+
+				
+			}else {
+				this.saveData();
+			}
+		},
+		showConfirmDialog: function(){
+			$('#confirmDialog').modal('show');
+		},
+		remove : function() {
+			
+			if(this.Employee.type == "Manager")
+			{
+
+				database.ref().child(Shop).child(shopId).child("branch").child(this.Employee.branchId).child("managerId").set('');
+				database.ref().child(Shop).child(shopId).child("branch").child(this.Employee.branchId).child("managerName").set('');
+			}
+
+			database.ref().child(Shop).child(shopId).child("employee").child(this.Employee.id).remove();
+
+			list_employee.splice(index, 1);
+			table_employee.clear().draw();
+			count = 1;
+			for(var i in list_employee)
+			{	
+				var employee = list_employee[i];
+				table_employee.row.add([count++, addHyperlink(employee.name), employee.username, employee.phone, employee.address, employee.branchName, employee.type, employee.state]).draw();			}
+
+			showToastSuccess('Remove successfull !!');
+			$('#confirmDialog').modal('hide');
 			this.closeDialog();
 		}
 
 	}
 })
 
+
+var confirmDialog = new Vue({
+	el: '#confirmDialog',
+	methods: {
+		remove: function(){
+			dialogEdit.remove();
+		}
+	}
+})
+
+$("#datepickerBirthday").datepicker();
+$("#datepickerBirthday1").datepicker();
 
 $('#table_employee tbody').on( 'click', 'tr', function (e) {
 	index = table_employee.row(this).data()[0]-1;

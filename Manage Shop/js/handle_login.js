@@ -22,7 +22,8 @@ var app = new Vue({
             else
             {
               setCookie("shopId", user.shopId);
-              window.location.href='report_revenue.html?preUrl='+window.location.href;
+              setCookie("shopName", user.shopName);
+              window.location.href='report_today.html?preUrl='+window.location.href;
               
             }
           });

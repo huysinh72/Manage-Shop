@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Admin - Product</title>
+    <title>Shop Manager - Product</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="../css/bootstrap.min.css" rel="stylesheet">
@@ -24,6 +24,8 @@
     <link href="../js/plugins/datatables-responsive/dataTables.responsive.css" rel="stylesheet">
 
     <link href="../css/plugins/jquery-ui.css" rel="stylesheet">
+    
+    <link href="../css/plugins/jquery.toast.css" rel="stylesheet">
 
     <link href="../css/plugins/jquery-ui.theme.css" rel="stylesheet">
 
@@ -33,19 +35,6 @@
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
 
-    
-
-    <style>
-        #over {
-            background: #000;
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.8;
-        }
-    </style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -60,7 +49,7 @@
     <div id="wrapper">
 
         <!-- Navigation -->
-       <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header ">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -83,7 +72,7 @@
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="login.html"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
+                            <a href="login.html" onclick="eraseCookie('shopId')"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
                         </li>
                     </ul>
                 </li>
@@ -95,6 +84,9 @@
                     <li>
                          <a href="javascript:;" data-toggle="collapse" data-target="#report"> <i class="fa fa-fw fa-bar-chart-o"></i> <b> Report </b><i class="fa fa-fw fa-caret-down"></i></a>
                          <ul id="report" class="collapse">
+                            <li >
+                                <a href="report_today.html"> Today report  </a>
+                            </li>
                             <li >
                                 <a href="report_revenue.html"> Revenue report  </a>
                             </li>
@@ -117,23 +109,13 @@
                         </ul>
                     </li>
 
-                    <li>
-                        <a href="import.html"><i class="fa fa-fw fa-sign-in"></i><b> Import </b> </a>
-                    </li>
-                    <li>
-                        <a href="branch.html"><i class="fa fa-fw fa-home"></i><b> Branch  </b></a>
-                    </li>
-                    <li>
-                        <a href="provider.html"><i class="fa fa-fw fa-user"></i><b> Provider </b></a>
-                    </li>
-
                     <li class="active">
                         <a href="javascript:;" data-toggle="collapse" data-target="#product">
                             <i class="fa fa-fw fa-tags"></i> <b> Products </b><i class="fa fa-fw fa-caret-down"></i>
                         </a>
                         <ul id="product" class="collapse">
                             <li>
-                                <a href="product.html"> List products</a>
+                                <a href="product.html"> Products</a>
                             </li>
                             <li>
                                 <a href="add_product.html"> Add product</a>
@@ -143,13 +125,31 @@
                             </li>
                         </ul>
                     </li>
-
+                    <li>
+                        <a href="import.html"><i class="fa fa-fw fa-sign-in"></i><b> Import </b> </a>
+                    </li>
                     <li>
                         <a href="distribution.html"><i class="fa fa-fw fa-sitemap"></i> <b> Distribution </b></a>
                     </li>
                     <li>
+                        <a href="invoice.html"><i class="fa fa-fw fa-user"></i> <b> invoice </b> </a>
+                    </li>
+                    <li>
+                        <a href="branch_transactions.html"><i class="fa fa-fw fa-user"></i> <b> Branch transactions </b> </a>
+                    </li>
+                    <li>
                         <a href="employee.html"><i class="fa fa-fw fa-user"></i> <b> Employee </b> </a>
                     </li>
+                    <li>
+                        <a href="branch.html"><i class="fa fa-fw fa-home"></i><b> Branch  </b></a>
+                    </li>
+                    <li>
+                        <a href="customer.html"><i class="fa fa-fw fa-user"></i><b> Customer </b></a>
+                    </li>
+                    <li>
+                        <a href="provider.html"><i class="fa fa-fw fa-user"></i><b> Provider </b></a>
+                    </li>
+                    
                 </ul>
             </div>
         </nav>
@@ -172,7 +172,9 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Barcode</label>
-                                        <input class="form-control" placeholder="Enter code" v-model="Product.barcode" :disabled="disabled == 1 ? true : false" required>
+                                        <input class="form-control" placeholder="Enter code" v-model="Product.barcode" disabled="true" required>
+                                        <img id="barcode" style="display:none;"></img>
+                                        <canvas id="canvas" style="display: none"></canvas>
                                     </div>
                                     <div class="form-group">
                                         <label>Category</label>
@@ -186,12 +188,12 @@
                                         <input class="form-control" disabled="true" v-model="salePriceFormat">
                                     </div>
                                     <div class="form-group">
-                                        <label>Current quantity</label>
+                                        <label>Recent quantity</label>
                                         <input class="form-control" placeholder="Enter quantity" v-model="Product.quantity1" required>
                                     </div>
                                     <div class="form-group">
-                                        <label>Current import price</label>
-                                        <input class="form-control" placeholder="Enter quantity" v-model="currentImportPrice" required>
+                                        <label>Recent import price</label>
+                                        <input class="form-control" placeholder="Enter price" v-model="currentImportPrice" required>
                                         <input class="form-control" disabled="true" v-model="currentImportPriceFormat">
                                     </div>
                                     <div class="form-group">
@@ -206,22 +208,23 @@
                                    
                                 </div>
                                 <div class="col-lg-6">
+
+                                    
                                     <div class="form-group">
-                                        <label>Discount</label>
-                                        <input class="form-control" placeholder="Enter discount" v-model="discount" required>
-                                        <input class="form-control" disabled="true" v-model="discountFormat">
+                                        <label>Discount (%)</label>
+                                        <input type="number" class="form-control" placeholder="Enter discount" v-model="Product.discount" required>
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12 col-lg-6">
                                             <div class="form-group">
-                                                <label>Start day</label>
+                                                <label>Start date</label>
                                                 <input type="text" class="form-control" id="datepickerStart">
                                             </div>  
                                         </div>
 
                                         <div class="col-sm-12 col-lg-6">
                                             <div class="form-group">
-                                                <label>End day</label> 
+                                                <label>End date</label> 
                                                 <input type="text" class="form-control" id="datepickerEnd">
                                             </div> 
                                         </div>
@@ -233,22 +236,41 @@
                                     </div>
                                      <div class="form-group">
                                         <label>Description</label>
-                                        <textarea class="form-control" rows="3" v-model="Product.productDescription" required :disabled="disabled == 1 ? true : false"></textarea>
+                                        <textarea class="form-control" rows="4" v-model="Product.productDescription" required :disabled="disabled == 1 ? true : false"></textarea>
                                     </div>
                                 </div>
-                                
                             </div>
                         </div>
                         <div class="modal-footer">
+
+                            <button type="button" class="btn btn-danger" v-on:click="showConfirmDialog" :disabled="disabled == 1 ? true : false">Remove</button>
+                            <button type="button" class="btn btn-success" v-on:click="printBarcode">Print barcode</button>
                             <input type="submit" class="btn btn-primary" value="Save changes">
-                            <button type="button" class="btn btn-danger" v-on:click="remove" :disabled="disabled == 1 ? true : false">Remove</button>
                             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                         </div>
                     </form>
                 </div>
               </div>
             </div>
-
+            
+            <div class="modal fade bs-example-modal-sm" id="confirmDialog" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+              <div class="modal-dialog modal-sm" role="document">
+                <div class="modal-content">
+                    <div class="modal-header" >
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h3 class="modal-title" id="myLargeModalLabel">Confirm</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure to remove it ?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" v-on:click="remove">Yes</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+                       
+                    </div>
+                </div>
+              </div>
+            </div>
             <div class="container-fluid">
 
                 <!-- Page Heading -->
@@ -264,11 +286,17 @@
                 <div class="row">
                     <div class="col-lg-12" >
                         <div id="app">
-                        <div class="form-group" style="text-align: right;">
-                            <select class="form-control" v-model="selectedBranch" v-on:change="loadProductList">
-                                <option v-for="branch in branches" :value="branch">{{ branch.name }}</option>
-                            </select>
+
+                        <div class="row">
+
+                            <div class="col-lg-4 col-md-6 form-group">
+                                <select class="form-control" v-model="selectedBranch" v-on:change="loadProductList">
+                                    <option v-for="branch in branches" :value="branch">{{ branch.name }}</option>
+                                </select>
+                            </div>
                         </div>
+                        
+
                         </div>
                         <div class="panel panel-default">
                             <div class="panel-body">
@@ -278,14 +306,16 @@
                                             <thead>
                                                 <tr>
                                                     <th>#</th>
-                                                    <th>Product name</th>
+                                                    <th>Product</th>
                                                     <th>Barcode</th>
                                                     <th>Sale price</th>
                                                     <th>Discount</th>
-                                                    <th>Expired</th>
+                                                    <th>Start date</th>
+                                                    <th>End date</th>
                                                     <th>Quantity</th>
-                                                    <th>Recent import price</th>
+                                                    <th>Import price</th>
                                                     <th>Category</th>
+                                                    <th>Branch</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -308,13 +338,9 @@
     </div>
     <!-- /#wrapper -->
 
-
-
-
     <!-- jQuery -->
     <script src="../js/jquery.js"></script>
-
-    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="../js/jquery.toast.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
     <!-- Bootstrap Core JavaScript -->
@@ -341,7 +367,9 @@
       };
       firebase.initializeApp(config);
     </script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.3/jspdf.debug.js"></script>
+    <script src="../js/JsBarcode.code128.min.js"></script>
+    <script src="../js/function.js"></script>
     <script src="../js/cookie.js"></script>
     <script src="../js/handle_product.js"></script>
 

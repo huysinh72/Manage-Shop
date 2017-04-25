@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Admin - Distribution</title>
+    <title>Shop Manager - Distribution</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="../css/bootstrap.min.css" rel="stylesheet">
@@ -17,8 +17,8 @@
     <!-- Custom CSS -->
     <link href="../css/sb-admin.css" rel="stylesheet">
 
-     <!-- Custom Fonts -->
     <link href="../css/plugins/jquery-ui.css" rel="stylesheet">
+    <link href="../css/plugins/jquery.toast.css" rel="stylesheet">
 
     <link href="../css/plugins/jquery-ui.theme.css" rel="stylesheet">
 
@@ -48,7 +48,7 @@
     <div id="wrapper">
 
         <!-- Navigation -->
-     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header ">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -71,7 +71,7 @@
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="login.html"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
+                            <a href="login.html" onclick="eraseCookie('shopId')"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
                         </li>
                     </ul>
                 </li>
@@ -83,6 +83,9 @@
                     <li>
                          <a href="javascript:;" data-toggle="collapse" data-target="#report"> <i class="fa fa-fw fa-bar-chart-o"></i> <b> Report </b><i class="fa fa-fw fa-caret-down"></i></a>
                          <ul id="report" class="collapse">
+                            <li >
+                                <a href="report_today.html"> Today report  </a>
+                            </li>
                             <li >
                                 <a href="report_revenue.html"> Revenue report  </a>
                             </li>
@@ -106,22 +109,12 @@
                     </li>
 
                     <li>
-                        <a href="import.html"><i class="fa fa-fw fa-sign-in"></i><b> Import </b> </a>
-                    </li>
-                    <li>
-                        <a href="branch.html"><i class="fa fa-fw fa-home"></i><b> Branch  </b></a>
-                    </li>
-                    <li>
-                        <a href="provider.html"><i class="fa fa-fw fa-user"></i><b> Provider </b></a>
-                    </li>
-
-                    <li>
                         <a href="javascript:;" data-toggle="collapse" data-target="#product">
                             <i class="fa fa-fw fa-tags"></i> <b> Products </b><i class="fa fa-fw fa-caret-down"></i>
                         </a>
                         <ul id="product" class="collapse">
                             <li>
-                                <a href="product.html"> List products</a>
+                                <a href="product.html"> Products</a>
                             </li>
                             <li>
                                 <a href="add_product.html"> Add product</a>
@@ -131,13 +124,31 @@
                             </li>
                         </ul>
                     </li>
-
+                    <li>
+                        <a href="import.html"><i class="fa fa-fw fa-sign-in"></i><b> Import </b> </a>
+                    </li>
                     <li class="active">
                         <a href="distribution.html"><i class="fa fa-fw fa-sitemap"></i> <b> Distribution </b></a>
                     </li>
                     <li>
+                        <a href="branch_transactions.html"><i class="fa fa-fw fa-user"></i> <b> Branch transactions </b> </a>
+                    </li>
+                    <li>
+                        <a href="invoice.html"><i class="fa fa-fw fa-user"></i> <b> invoice </b> </a>
+                    </li>
+                    <li>
                         <a href="employee.html"><i class="fa fa-fw fa-user"></i> <b> Employee </b> </a>
                     </li>
+                    <li>
+                        <a href="branch.html"><i class="fa fa-fw fa-home"></i><b> Branch  </b></a>
+                    </li>
+                    <li>
+                        <a href="customer.html"><i class="fa fa-fw fa-user"></i><b> Customer </b></a>
+                    </li>
+                    <li>
+                        <a href="provider.html"><i class="fa fa-fw fa-user"></i><b> Provider </b></a>
+                    </li>
+                    
                 </ul>
             </div>
         </nav>
@@ -172,11 +183,17 @@
                         </div>
                         <label>Quantity</label>
                         <div class="row">
-                            <div class="form-group col-lg-6 col-md-6">
-                                <input disabled="true" class="form-control" v-model="quantity"> </input>   
+                            <div class="form-group col-lg-4 col-md-6">
+                                <input disabled="true" class="form-control" v-model="quantityDisplay"> </input>   
                             </div>
-                            <div class="form-group col-lg-6 col-md-6" style="text-align: right;">
-                                <button type="button" class="btn btn-primary" style="margin-right: 5%" v-on:click="autoDistribution">Automatic distribution</button>
+                            <div class="form-group col-lg-4 col-md-6">
+
+                                <select class="form-control" v-model="selectedDistributionType" v-on:change="onDistributionTypeChange">
+                                    <option v-for="distribution in distributions" :value="distribution">{{distribution}}</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-lg-4 col-md-6" style="text-align: right;">
+                                <button type="button" class="btn btn-primary" style="margin-right: 5%" v-on:click="activeDistribution">Active distribution type </button>
                                 <button type="button" class="btn btn-success" v-on:click="distribute">Distribute</button>
                             </div>
                         </div>
@@ -196,7 +213,7 @@
                                                     <tr>
                                                         <th>#</th>
                                                         <th>Branch</th>
-                                                        <th>Sale quantity</th>
+                                                        <th>Sale quantity/Month</th>
                                                         <th>Old import quantity</th>
                                                         <th>Recent import quantity</th>
                                                         <th>Now distribution quatity </th>
@@ -255,7 +272,7 @@
 
     <!-- jQuery -->
     <script src="../js/jquery.js"></script>
-
+    <script src="../js/jquery.toast.js"></script>
     <!-- Bootstrap Core JavaScript -->
     <script src="../js/bootstrap.min.js"></script>
 
@@ -278,7 +295,7 @@
       };
       firebase.initializeApp(config);
     </script>
-    <script src="../js/datetime.js"></script>
+    <script src="../js/function.js"></script>
     <script src="../js/cookie.js"></script>
     <script src="../js/handle_distribution.js"></script>
 

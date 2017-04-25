@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Shop Manager - Report Profit</title>
+    <title>Shop Manager - Today Report</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="../css/bootstrap.min.css" rel="stylesheet">
@@ -19,7 +19,6 @@
 
     <!-- Morris Charts CSS -->
     <link href="../css/plugins/morris.css" rel="stylesheet">
-    <link href="../css/plugins/jquery.toast.css" rel="stylesheet">
 
     <!-- Custom Fonts -->
     <link href="../font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
@@ -45,7 +44,7 @@
     <div id="wrapper">
 
         <!-- Navigation -->
-        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+       <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header ">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
@@ -150,7 +149,6 @@
             </div>
         </nav>
 
-
 <!-- /.navbar-collapse -->
 
         <div id="page-wrapper">
@@ -161,72 +159,72 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <h1 class="page-header">
-                            Profit report 
+                            Today report 
                         </h1>
 
                     </div>
                 </div> 
-
+    
                 <div class="row">
-                    <div class="row" id="app">
-                        <div class="col-lg-4 col-md-6 col-sm-12">
-                            <div class="form-group" style="margin-left: 5%">
-                                <select class="form-control" v-model="selectedTime" v-on:change="onChangeTime">
-                                    <option v-for="time in times" :value="time">{{time}}</option>
-                                </select>
+                    <div class="col-lg-12">
+                        <div class="panel panel-green">
+                            <div class="panel-heading">
+                                <h3 class="panel-title"><i class="fa fa-dollar fa-fw"></i> <big> Sales result today </big></h3>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <h3 id="invoices"><i class="fa fa-tags" style="color: #d9534f; margin-left:5%" ></i> 0 <sub style="color: #888888 ">invoices</sub></h3>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <h3 id="revenue"><i class="fa fa-dollar" style="color: #5cb85c;margin-left:5% "></i> 0 <sub style="color: #888888">revenue</sub></h3> 
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <h3 id="compare"><i class="fa fa-arrow-up" style="color: #337ab7; margin-left:5%"></i> 0% <sub style="color: #888888">compared to yesterday</sub></h3> 
+                                    </div>
+                                </div>
                             </div> 
                         </div>
-
-                        <div class="col-sm-6 col-md-6 col-lg-4">
-                            <div class="form-group" style="margin-left: 5%">
-                                <button type="button" class="btn btn-info" onclick="exportExcel()">Export excel</button>
-                            </div>
-                        </div>
-
-                        <div class="row col-lg-12 col-md-12 col-sm-12" id="formDay" style="display:'';">
-                            <div class="col-sm-6 col-md-6 col-lg-4">
-                                <div class="form-group" style="margin-left: 5%">
-                                    Start date: 
-                                    <input type="text" class="form-control" id="datepickerStart">
-                                </div>  
-                            </div>
-
-                            <div class="col-sm-6 col-md-6 col-lg-4">
-                                <div class="form-group" style="margin-left: 5%">
-                                    End date: 
-                                    <input type="text" class="form-control" id="datepickerEnd">
-                                </div> 
-                            </div>
-                            <div class="col-sm-6 col-md-6 col-lg-4">
-                                <div class="form-group" style="margin-left: 5%; margin-top:6% ">
-                                    <button type="button" class="btn btn-success" v-on:click="loadProfitDate">Search</button>
-                                </div>
-                                
-                            </div>
-                        </div>
-                         
                     </div>
-                    
-
+                </div>
+   
+        <!-- /.row -->
+                
+                <div class="row">
                     <div class="col-lg-12">
                         <div class="panel panel-primary">
                             <div class="panel-heading">
-                                <h3 class="panel-title"><i class="fa fa-bar-chart-o fa-fw"></i> Profit shop </h3>
+                                <h3 class="panel-title"><i class="fa fa-bar-chart-o fa-fw"></i> Branches revenue today </h3>
                             </div>
-
-                            <div class="form-group" style="margin-left: 2%;">
-                                <h3 id="profitTotal">Profit total: <label> $0 </label> </h3> 
-                            </div>
-
                             <div class="panel-body">
                                 <div class="flot-chart">
-                                    <div id="morris-bar-chart"></div>
+                                    <div id="morris-bar-chart-branch"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                <h3 class="panel-title"><i class="fa fa-bar-chart-o fa-fw"></i> Top 10 product selling today </h3>
+                            </div>
+                            <div class="panel-body">
+                                <div class="flot-chart">
+                                    <div id="morris-bar-chart-product"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
             <!-- /.row -->
 
             </div>
@@ -240,10 +238,7 @@
 
 <!-- jQuery -->
 <script src="../js/jquery.js"></script>
-<script src="../js/jquery.toast.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-<script src="../js/xlsx.core.min.js"></script>
-<script src="../js/alasql.min.js"></script>
 
 <!-- Bootstrap Core JavaScript -->
 <script src="../js/bootstrap.min.js"></script>
@@ -269,7 +264,7 @@
 </script>
 <script src="../js/function.js"></script>
 <script src="../js/cookie.js"></script>
-<script src="../js/handle_report_profit.js"></script>
+<script src="../js/handle_report_today.js"></script>
 
 </body>
 
