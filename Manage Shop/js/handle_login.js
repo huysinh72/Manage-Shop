@@ -21,6 +21,7 @@ var app = new Vue({
               alert("Wrong password");
             else
             {
+              setCookie("username", user.name);
               setCookie("shopId", user.shopId);
               setCookie("shopName", user.shopName);
               window.location.href='report_today.html?preUrl='+window.location.href;

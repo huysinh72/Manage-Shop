@@ -1,6 +1,7 @@
 var shopId = getCookie("shopId");
 if(shopId == null)
     window.location.href='login.html?preUrl='+window.location.href;
+document.getElementById("user").innerHTML = "<i class=\"fa fa-user\"></i> "+ getCookie("username") +"<b class=\"caret\"></b>";
 var Shop = "Shop";
 var database = firebase.database();
 
@@ -48,9 +49,8 @@ var app = new Vue({
                 sd = getNextDay(sd);
                 diffDate --;
             }
-            startDate = startDate+' 00:00:00';
-            endDate = endDate + ' 24:00:00';
-            firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate).endAt(endDate).once('value', snapshot => {
+         
+            firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate +' 00:00:00').endAt(endDate + ' 24:00:00').once('value', snapshot => {
                 snapshot.forEach(function(childSnapshot) {
                     
                     for(i = 0; i < dates.length; i++)
@@ -79,15 +79,12 @@ var app = new Vue({
 
         handleMonth: function(startDate, endDate, index)
         {
-            startDate = startDate+' 00:00:00';
-            endDate = endDate + ' 24:00:00';
-            firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate).endAt(endDate).once('value', snapshot => {       
+    
+            firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate +' 00:00:00').endAt(endDate + ' 24:00:00').once('value', snapshot => {       
                 snapshot.forEach(function(childSnapshot) {
                     
-                   
                         months[index].Revenue += childSnapshot.child("salePriceTotal").val();
                         months[index].Capital += childSnapshot.child("importPriceTotal").val();
-                    
                           
                 });
                 
@@ -188,7 +185,7 @@ var profitBar = Morris.Bar({
     ykeys: ['Capital','Revenue','Profit' ],
     labels: ['Capital','Revenue','Profit'],
     barRatio: 0.4,
-    xLabelAngle: 35,
+    xLabelAngle: 10,
     barColors: ['#337ab7', '#5cb85c', '#d9534f', '#afd8f8', '#edc240', '#cb4b4b', '#9440ed'],
     hideHover: 'auto',
     resize: true

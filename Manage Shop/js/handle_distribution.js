@@ -1,6 +1,7 @@
 var shopId = getCookie("shopId");
 if(shopId == null)
 	window.location.href='login.html?preUrl='+window.location.href;
+document.getElementById("user").innerHTML = "<i class=\"fa fa-user\"></i> "+ getCookie("username") +"<b class=\"caret\"></b>";
 var Shop = "Shop";
 var database = firebase.database(); 
 
@@ -230,16 +231,18 @@ var app = new Vue({
 			else
 			{
 				var sum = 0;
-				for(i = 0; i < saleQuantities.length; i++)
-					sum += saleQuantities[i];
+				for(i = 1; i < countProduct; i++)
+					if(document.getElementById(""+i).disabled == false)
+						sum += saleQuantities[i-1];
 
 				if(sum==0)
 					this.equalDistribution();
 				else
 				{
 					var remainder = 0;
-					for(i = 0; i < saleQuantities.length; i++)
-						remainder += parseInt(saleQuantities[i]/sum*this.quantity);
+					for(i = 1; i < countProduct; i++)
+						if(document.getElementById(""+i).disabled == false)
+							remainder += parseInt(saleQuantities[i-1]/sum*this.quantity);
 
 					remainder = this.quantity - remainder;
 					

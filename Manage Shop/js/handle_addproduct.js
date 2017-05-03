@@ -1,6 +1,7 @@
 var shopId = getCookie("shopId");
 if(shopId == null)
 	window.location.href='login.html?preUrl='+window.location.href;
+document.getElementById("user").innerHTML = "<i class=\"fa fa-user\"></i> "+ getCookie("username") +"<b class=\"caret\"></b>";
 var Shop = "Shop";
 var database = firebase.database();
 var storage = firebase.storage(); 
@@ -41,11 +42,17 @@ var app = new Vue({
 	},
 	methods: {
 		onBarcodeChange: function(){
-			//alert("ádfsdaf");
+			
 			JsBarcode("#barcode" , this.Product.barcode);
-			//JsBarcode("#barcode", "1234567890128", {format: "ean13"});
 			productNumber = -1;
 			
+		},
+		getProductNumber: function()
+		{
+			database.ref().child(Shop).child(shopId).child("productNumber")
+			.once('value', snapshot => {
+				productNumber = snapshot.val();
+			});
 		},
 		createBarcode :function()
 		{
@@ -110,7 +117,7 @@ var app = new Vue({
 			database.ref().child(Shop).child(shopId).child("product").child(this.Product.id).set(this.Product);
 
 			if(productNumber != -1)
-				database.ref().child(Shop).child(shopId).child("productNumber").set(productNumber+1);
+				database.ref().child(Shop).child(shopId).child("productNumber").set(++productNumber);
 
 			var branchProduct = {
 		    	id: this.Product.id,
@@ -159,7 +166,8 @@ var app = new Vue({
 
 	},
 	beforeMount(){
-	    this.loadCategory()
+	    this.loadCategory();
+	    this.getProductNumber();
 	}
 })
 
@@ -169,9 +177,12 @@ var dataProductFile = [];
 
 function showDialog()
 {
+	app.getProductNumber();
 	$('#dialog').modal('show');
 }
 
+
+var abc = '';
 function onFileChange(event)
 {	
 	dataProductFile = [];
@@ -179,11 +190,31 @@ function onFileChange(event)
 	table_ProductFile.clear().draw();
 	
     alasql('SELECT * FROM FILE(?,{headers:true})',[event],function(data){
-    	dataProductFile = data;
+    	
+
        	for(i = 0; i < data.length; i++){
+       		if(data[i].Barcode == null)
+       		{
+       			var ss = ''+ (++productNumber);
+
+				if(ss.length < 5)
+				{
+					var n = 5-ss.length;
+					for(j = 0; j < n; j++)
+						ss = '0' + ss;
+				}
+       			ss = 'SP' + ss;
+       			data[i].Barcode = ss;
+       				
+       		}
+       		if(data[i].Description == null)
+       			data[i].Description = '';
+
+
         	table_ProductFile.row.add([countData++, data[i].Barcode, data[i].ProductName, accounting.formatNumber(data[i].SalePrice), data[i].Description]).draw();
     	}
-    }); 
+    	dataProductFile = data;
+    });
     $('#dialogProductTable').modal('show');	 
 }
 
@@ -206,8 +237,70 @@ function getSampleFile()
 
 function addProductFile()
 {
+	Product =  {
+    	id: '',
+    	name: '',
+		barcode: '',
+		categoryName: '',
+		categoryId : '',
+		salePrice: '',
+		importPrice1: 0,
+		importPrice2: 0,
+		productDescription: '',
+		quantity1: 0,
+		quantity2: 0,
+		discount: 0,
+		startDate: '',
+		endDate: '',
+		image: '',
+    	state: 'Active'
+    }
 	for(i = 0; i < dataProductFile.length; i++)
 	{
 
+		Product.name = dataProductFile[i].ProductName;
+		Product.barcode = dataProductFile[i].Barcode;
+		Product.salePrice = dataProductFile[i].SalePrice;
+		Product.productDescription = dataProductFile[i].Description;
+
+		Product.id = database.ref().child(Shop).child(shopId).child("product").push().key;
+		database.ref().child(Shop).child(shopId).child("product").child(this.Product.id).set(Product);
+
+		var branchProduct = {
+	    	id: Product.id,
+	    	name: Product.name,
+			barcode: Product.barcode,
+			categoryName: '',
+			categoryId : '',
+			salePrice: Product.salePrice,
+			saleQuantity: 0,
+			importPrice1: 0,
+			importPrice2: 0,
+			productDescription: Product.productDescription,
+			quantity1: 0,
+			quantity2: 0,
+			discount: 0,
+			startDate: '',
+			endDate: '',
+			image: '',
+	    	state: 'Active'
+	    }
+
+		database.ref().child(Shop).child(shopId).child("branch").once('value', snapshot => {
+			snapshot.forEach(function(childSnapshot) {
+				var branch  = childSnapshot.val();
+				branchProduct.branchId = branch.id;
+				branchProduct.branchName = branch.name;
+				branchProduct.key = database.ref().child(Shop).child(shopId).child("branchStore").push().key;
+				database.ref().child(Shop).child(shopId).child("branchStore").child(branchProduct.key).set(branchProduct);
+			});
+
+		});
 	}
+
+	database.ref().child(Shop).child(shopId).child("productNumber").set(productNumber);
+	showToastSuccess('Add successfull product !!');
+
+	$('#dialog').modal('hide');
+	$('#dialogProductTable').modal('hide');	
 }

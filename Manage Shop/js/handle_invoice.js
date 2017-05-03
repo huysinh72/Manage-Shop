@@ -1,6 +1,7 @@
 var shopId = getCookie("shopId");
 if(shopId == null)
 	window.location.href='login.html?preUrl='+window.location.href;
+document.getElementById("user").innerHTML = "<i class=\"fa fa-user\"></i> "+ getCookie("username") +"<b class=\"caret\"></b>";
 var Shop = "Shop";
 var database = firebase.database();
 var storage = firebase.storage(); 

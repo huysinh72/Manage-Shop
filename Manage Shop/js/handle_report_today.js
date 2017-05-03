@@ -1,6 +1,9 @@
 var shopId = getCookie("shopId");
 if(shopId == null)
     window.location.href='login.html?preUrl='+window.location.href;
+
+document.getElementById("user").innerHTML = "<i class=\"fa fa-user\"></i> "+ getCookie("username") +"<b class=\"caret\"></b>";
+
 var Shop = "Shop";
 var database = firebase.database();
 
@@ -123,7 +126,7 @@ var branchBar = Morris.Bar({
     ykeys: ['revenue'],
     labels: ['Revenue'],
     barRatio: 0.4,
-    xLabelAngle: 35,
+    xLabelAngle: 10,
     hideHover: 'auto',
     barColors: ['#5cb85c', '#337ab7', '#d9534f', '#afd8f8', '#edc240', '#cb4b4b', '#9440ed'],
     resize: true
