@@ -13,7 +13,7 @@ $( "#datepickerEnd").datepicker();
 
 $('#table_branch').DataTable({
     "columnDefs": [
-      { className: "text-right", "targets": [1, 2, 3, 4] },
+      { className: "text-right", "targets": [1, 2, 3]},
 
     ]
 });
@@ -39,8 +39,8 @@ function loadProfit(startDate, endDate)
         });
         firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate).endAt(endDate).once('value', snapshot => {
             snapshot.forEach(function(childSnapshot) {
-
-                for(i = 0; i< branches.length; i++)
+                if(childSnapshot.child("state").val() == 1)
+                for(i = 0; i < branches.length; i++)
                     if(childSnapshot.child("branchName").val() == branches[i].Branch)
                     {
                         branches[i].Revenue += childSnapshot.child("salePriceTotal").val();
@@ -53,10 +53,8 @@ function loadProfit(startDate, endDate)
             for(i = 0; i< branches.length; i++)
             {
                 branches[i].Profit = branches[i].Revenue - branches[i].Capital;
-                table_branch.row.add([branches[i].Branch, accounting.formatNumber(branches[i].Revenue), accounting.formatNumber(branches[i].Capital), accounting.formatNumber(branches[i].Profit), branches[i].Invoice]).draw();
+                table_branch.row.add([branches[i].Branch, accounting.formatNumber(branches[i].Revenue), accounting.formatNumber(branches[i].Capital), branches[i].Invoice]).draw();
             }
-
-
 
             branchBar.setData(branches);
         });
@@ -87,15 +85,14 @@ var branchBar = Morris.Bar({
     data: [{
         Branch: '',
         Capital: 0,
-        Revenue: 0,
-        Profit: 0
+        Revenue: 0
     }],
     xkey: 'Branch',
-    ykeys: ['Capital','Revenue','Profit' ],
-    labels: ['Capital','Revenue','Profit'],
+    ykeys: ['Capital','Revenue'],
+    labels: ['Capital','Revenue'],
     barRatio: 0.4,
-    xLabelAngle: 10,
-    barColors: ['#337ab7', '#5cb85c', '#d9534f', '#afd8f8', '#edc240', '#cb4b4b', '#9440ed'],
+    xLabelAngle: 50,
+    barColors: ['#5cb85c', '#d9534f', '#d9534f', '#afd8f8', '#edc240', '#cb4b4b', '#9440ed'],
     hideHover: 'auto',
     resize: true
 });

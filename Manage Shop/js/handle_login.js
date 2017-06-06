@@ -17,8 +17,10 @@ var app = new Vue({
 
           snapshot.forEach(function(childSnapshot) {
             var user  = childSnapshot.val();
-            if(user.password != password)
-              alert("Wrong password");
+            if(user.password != SHA256(password)){
+              alert(SHA256(password));
+              showToastWarning("Wrong password");
+            }
             else
             {
               setCookie("username", user.name);

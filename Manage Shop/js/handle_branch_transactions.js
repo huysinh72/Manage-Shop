@@ -13,10 +13,11 @@ $( "#datepickerEnd").datepicker();
 var list_importBill = [];
 $('#table_branch_transactions').DataTable({
     "columnDefs": [
-      { className: "text-right", "targets": [1, 2, 3, 4]},
-
-    ]
+      { className: "text-right", "targets": [1, 2, 3, 4, 5, 6]},
+    ],
+    "order": [[ 0, "desc" ]]
 });
+
 
 var table_branch_transactions = $('#table_branch_transactions').DataTable();
 
@@ -26,28 +27,30 @@ var endDate = formatDateYYMMDDtoMMDDYY(currentDay);
 
 function getState(state)
 {
-    if (state == 2)
-        return 'Waiting';
-    else
-        if(state == 3)
-            return 'Shipping';
-        else
-            return 'Received';
+    if(state == 2)
+        return "Unassign";
+    else 
+        return "Assigned";
 }
 
 function loadtransaction(startDate, endDate)
 {
     transactions = [];
     
-    firebase.database().ref().child(Shop).child(shopId).child("notification").orderByChild("time").startAt(startDate).endAt(endDate).once('value', snapshot => {
+    firebase.database().ref().child(Shop).child(shopId).child("notification").orderByChild("time").startAt(startDate + ' 00:00:00').endAt(endDate + '24:00:00').once('value', snapshot => {
         snapshot.forEach(function(childSnapshot) {
-            transaction = childSnapshot.val();
-            transactions.push(transaction);
+    
+            if(childSnapshot.child("state").val() == 4 | childSnapshot.child("state").val() == 2)
+            {
+                transaction = childSnapshot.val();
+                
+                transactions.push(transaction);
+            }
         });
 
         table_branch_transactions.clear().draw();
         for(i = 0; i < transactions.length; i++)
-            table_branch_transactions.row.add([addHyperlink(transactions[i].time), transactions[i].from,  transactions[i].to, transactions[i].product, transactions[i].quantity, getState(transactions[i].state)]).draw();
+            table_branch_transactions.row.add([transactions[i].time, transactions[i].descript, transactions[i].from, transactions[i].to, transactions[i].product,transactions[i].quantity, transactions[i].acceptedQuantity, getState(transactions[i].state)]).draw();
 
     });
     
@@ -82,7 +85,7 @@ function exportExcel()
         em.From = transactions[i].from;
         em.To = transactions[i].to;
         em.Product = transactions[i].product;
-        em.Quantity = transactions[i].quantity;
+        em.Quantity = transactions[i].acceptedQuantity;
         em.State = getState(transactions[i].state);
         data.push(em);
 

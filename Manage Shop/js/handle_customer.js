@@ -3,19 +3,20 @@ if(shopId == null)
 	window.location.href='login.html?preUrl='+window.location.href;
 document.getElementById("user").innerHTML = "<i class=\"fa fa-user\"></i> "+ getCookie("username") +"<b class=\"caret\"></b>";
 var Shop = "Shop";
-var database = firebase.database(); 
+var database = firebase.database();
+var storage = firebase.storage();  
 
 var list_customer = [];
 var list_pointLevel = [];
 
 $('#table_customer').DataTable({
     "columnDefs": [
-      { className: "text-right", "targets": [4] }]
+      { className: "text-right", "targets": [4]}]
 });
 
 $('#table_point_level').DataTable({
     "columnDefs": [
-      { className: "text-right", "targets": [0,1] }]
+      { className: "text-right", "targets": [0,1]}]
 });
 
 var table_customer = $('#table_customer').DataTable();
@@ -38,11 +39,42 @@ firebase.database().ref().child(Shop).child(shopId).child("pointLevel").on('chil
 var dialogEdit = new Vue({
 	el: '#dialog',
 	data: {
-	    Customer: {}
+	    Customer: {},
+	    image: {}
 	},
 	methods: {
 		loadData :function (customer){
 			this.Customer = customer;
+			$('#customer_image_edit').attr('src', '../image/noimageavailable.png');
+			storage.ref().child('images/'+ shopId+'/Customer/'+ this.Customer.imageName).getDownloadURL().then(function(url) {
+				var xhr = new XMLHttpRequest();
+				xhr.responseType = 'blob';
+				xhr.onload = function(event) {
+				   	var blob = xhr.response;
+				};
+				xhr.open('GET', url);
+				xhr.send();
+
+				// Or inserted into an <img> element:
+				var img = document.getElementById('customer_image_edit');
+				img.src = url;
+			}).catch(function(error) {
+				  // Handle any errors
+			});
+		},
+		onFileChange : function (){
+			var input = document.getElementById("customer_file_edit");
+		   	if (input.files && input.files[0]) {
+		        var reader = new FileReader();
+
+		        reader.onload = function (e) {
+		            $('#customer_image_edit').attr('src', e.target.result);
+		        }
+
+		        reader.readAsDataURL(input.files[0]);
+		    }
+
+		   	this.image = input.files[0];
 		},
 		closeDialog : function (){
 			$('#dialog').modal('hide');
@@ -57,7 +89,26 @@ var dialogEdit = new Vue({
 				table_customer.row.add([count++, addHyperlink(customer.name), customer.phone, customer.email, customer.point]).draw();
 			}
 		},
-		saveChange : function (){		
+		saveChange : function (){
+			if(document.getElementById("customer_image_edit").value != "")
+			{
+				this.Customer.imageName = this.image.name;
+
+		   		var uploadTask = storage.ref().child('images/'+ shopId+'/Customer/'+ this.Customer.imageName).put(this.image);
+
+		   		uploadTask.on('state_changed', function(snapshot){
+					// Observe state change events such as progress, pause, and resume
+					// Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+					}, function(error) {
+					 // Handle unsuccessful uploads
+					}, function() {
+					// Handle successful uploads on complete
+					// For instance, get the download URL: https://firebasestorage.googleapis.com/...
+					var downloadURL = uploadTask.snapshot.downloadURL;
+				});
+
+			}
+
 			database.ref().child(Shop).child(shopId).child("customer").child(this.Customer.id).set(this.Customer);
 			list_customer[index] = this.Customer;
 			this.reload();

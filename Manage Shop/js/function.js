@@ -67,7 +67,7 @@ function getYesterdaysDate() {
 }
 
 function getBeforeDate(d, b) {
-    var date = new Date();
+    var date = new Date(d);
     date.setDate(date.getDate()-b);
     month = (date.getMonth()+1);
     day = date.getDate();
@@ -77,6 +77,21 @@ function getBeforeDate(d, b) {
 		day = "0" + day;
 
     return date.getFullYear() + '/' + month + '/' + day;
+}
+
+function getNextDate(d, b)
+{
+	var date = new Date(d);
+	date.setDate(date.getDate()+b);
+	month = (date.getMonth()+1);
+    day = date.getDate();
+    if(month < 10)
+		month = "0" + month;
+	if(day < 10)
+		day = "0" + day;
+
+    return date.getFullYear()+ '/'+ month + '/' + day;
+
 }
 
 function getNextDay(d)
@@ -127,6 +142,11 @@ function getCurrentDateAndTime() {
 		day = "0" + day;
 
     return date.getFullYear() + '/' + month + '/' + day + ' ' + date.getHours()+ ':'+date.getMinutes()+':'+date.getSeconds();
+}
+
+function getCurrentTime(){
+	var date = new Date();
+	return date.getHours()+ ':'+date.getMinutes()+':00';
 }
 
 function getNumberBarcode(barcode)

@@ -53,7 +53,7 @@ var app = new Vue({
             var key = database.ref().child(Shop).push().key;
             database.ref().child(Shop).child(key).child("productNumber").set(0);
             this.User.shopId = key;
-
+            this.User.password = SHA256(this.User.password);
             database.ref().child(User).push(this.User);
 
             showToastSuccess(this.User.shopName + " shop was created");

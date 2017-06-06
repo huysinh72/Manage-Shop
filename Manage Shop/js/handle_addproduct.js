@@ -22,13 +22,14 @@ var app = new Vue({
 			barcode: '',
 			categoryName: '',
 			categoryId : '',
-			salePrice: '',
+			salePrice: 0,
 			importPrice1: 0,
 			importPrice2: 0,
 			productDescription: '',
 			quantity1: 0,
 			quantity2: 0,
 			discount: 0,
+			reducePrice: 0,
 			startDate: '',
 			endDate: '',
 			image: '',
@@ -37,7 +38,7 @@ var app = new Vue({
 	},
 	watch: {
 	    salePrice: function() {
-	      	this.salePriceFormat = accounting.formatNumber(this.salePrice, 2);
+	      	this.salePriceFormat = accounting.formatNumber(this.salePrice);
 	    }
 	},
 	methods: {
@@ -133,6 +134,7 @@ var app = new Vue({
 				quantity1: 0,
 				quantity2: 0,
 				discount: 0,
+				reducePrice: 0,
 				startDate: '',
 				endDate: '',
 				image: this.Product.image,
@@ -250,6 +252,7 @@ function addProductFile()
 		quantity1: 0,
 		quantity2: 0,
 		discount: 0,
+		reducePrice: 0,
 		startDate: '',
 		endDate: '',
 		image: '',
@@ -280,6 +283,7 @@ function addProductFile()
 			quantity1: 0,
 			quantity2: 0,
 			discount: 0,
+			reducePrice: 0,
 			startDate: '',
 			endDate: '',
 			image: '',

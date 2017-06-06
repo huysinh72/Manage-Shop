@@ -8,20 +8,23 @@ var storage = firebase.storage();
 
 var list_invoice = [];
 
+var states = ['Paid', 'Canceled'];
+var paymentType = ['Cash', 'Payoo'];
+
 $( "#datepickerStart").datepicker();
 $( "#datepickerEnd").datepicker();
 
 var list_importBill = [];
 $('#table_invoice').DataTable({
     "columnDefs": [
-      { className: "text-right", "targets": [3,4,5] },
-
-    ]
+      { className: "text-right", "targets": [3,4,5]},
+    ],
+    "order": [[ 1, "desc" ]]
 });
 
 $('#table_invoiceDetail').DataTable({
     "columnDefs": [
-      { className: "text-right", "targets": [3,4,5] },
+      { className: "text-right", "targets": [3,4,5,6] },
 
     ]
 });
@@ -34,7 +37,30 @@ var index = 0;
 var currentDate = getCurrentDate();
 
 
-function loadInvoice(startDate, endDate)
+var app = new Vue({
+    el: '#app',
+    data: {
+        branches:[],
+        selectedBranch: null,
+        
+    },
+    beforeMount(){
+        branch = {};
+        branch.name  = "All";
+        this.branches.push(branch);
+        this.selectedBranch = branch;
+
+        firebase.database().ref().child(Shop).child(shopId).child("branch").on('child_added', snapshot => {
+            
+            branch = snapshot.val();
+            this.branches.push(branch);
+           
+        });
+    }
+})
+
+
+function loadAllInvoice(startDate, endDate)
 {
 	startDate = startDate+' 00:00:00';
     endDate = endDate + ' 24:00:00';
@@ -46,8 +72,28 @@ function loadInvoice(startDate, endDate)
 		
 		var invoice  = snapshot.val();
 		list_invoice.push(invoice);
-		table_invoice.row.add([invoice.sequenceNo, addHyperlink(invoice.time), invoice.customerName, accounting.formatNumber(invoice.salePriceTotal), invoice.branchName, invoice.employeeName]).draw();
+		table_invoice.row.add([addHyperlink(invoice.sequenceNo), invoice.time, invoice.customerName, accounting.formatNumber(invoice.salePriceTotal), paymentType[invoice.paymentMethod], invoice.branchName, invoice.employeeName, states[invoice.state-1]]).draw();
 		
+	});
+}
+
+function loadInvoiceFollowBranch(startDate, endDate, selectedBranch)
+{
+
+	startDate = startDate+' 00:00:00';
+    endDate = endDate + ' 24:00:00';
+	count = 1;
+	index = 0;
+	table_invoice.clear().draw();
+	list_invoice = [];
+
+	firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate).endAt(endDate).on('child_added', snapshot => {
+		var invoice  = snapshot.val();
+		if(invoice.branchId == selectedBranch.id)
+		{
+			list_invoice.push(invoice);
+			table_invoice.row.add([addHyperlink(invoice.sequenceNo), invoice.time, invoice.customerName, accounting.formatNumber(invoice.salePriceTotal),paymentType[invoice.paymentMethod], invoice.branchName, invoice.employeeName, states[invoice.state-1]]).draw();
+		}
 	});
 }
 
@@ -56,17 +102,21 @@ function searchFollowDate()
     startDate = document.getElementById("datepickerStart").value;
     endDate = document.getElementById("datepickerEnd").value;
 
-
     if(startDate == '' | endDate == '')
         showToastWarning("You have not entered a date yet!");
     else
     if(formatDateMMDDYYtoYYMMDD(startDate) > formatDateMMDDYYtoYYMMDD(endDate))
         showToastWarning("Start date must be before end date!");
     else
-        loadInvoice(formatDateMMDDYYtoYYMMDD(startDate), formatDateMMDDYYtoYYMMDD(endDate))
+    {
+        if(app.selectedBranch.name == 'All')
+            loadAllInvoice(formatDateMMDDYYtoYYMMDD(startDate), formatDateMMDDYYtoYYMMDD(endDate));
+        else
+            loadInvoiceFollowBranch(formatDateMMDDYYtoYYMMDD(startDate), formatDateMMDDYYtoYYMMDD(endDate), app.selectedBranch);
+    }
 }
 
-loadInvoice(currentDate, currentDate);
+loadAllInvoice(currentDate, currentDate);
 
 var dialogEdit = new Vue({
 	el: '#invoiceInfo',
@@ -83,7 +133,7 @@ var dialogEdit = new Vue({
 			for(i = 1; i < invoice.product.length; i++)
 			{
 				invoiceDetail = invoice.product[i];
-				table_invoiceDetail.row.add([stt++, invoiceDetail.barcode, invoiceDetail.name, invoiceDetail.quantity1+invoiceDetail.quantity2, accounting.formatNumber(invoiceDetail.salePrice), invoiceDetail.discount + '%']).draw();
+				table_invoiceDetail.row.add([stt++, invoiceDetail.barcode, invoiceDetail.name, invoiceDetail.quantity1+invoiceDetail.quantity2, accounting.formatNumber(invoiceDetail.salePrice), invoiceDetail.discount + '%', accounting.formatNumber(invoiceDetail.reducePrice)]).draw();
 			}
 		}
 	}
@@ -104,5 +154,5 @@ $('#table_invoice tbody').on( 'click', 'tr', function (e) {
 
 });
 
-document.getElementById("datepickerStart").value = currentDate;
-document.getElementById("datepickerEnd").value = currentDate;
+document.getElementById("datepickerStart").value = formatDateYYMMDDtoMMDDYY(currentDate);
+document.getElementById("datepickerEnd").value = formatDateYYMMDDtoMMDDYY(currentDate);

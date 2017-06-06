@@ -10,14 +10,14 @@ var database = firebase.database();
 var list_importBill = [];
 $('#table_importBill').DataTable({
     "columnDefs": [
-      { className: "text-right", "targets": [2,3] },
-
-    ]
+      { className: "text-right", "targets": [2,3,4] },
+    ],
+    "order": [[ 0, "desc" ]]
 });
 
 $('#table_importFile').DataTable({
     "columnDefs": [
-      { className: "text-right", "targets": [3,4] },
+      { className: "text-right", "targets": [3,4]},
 
     ]
 });
@@ -30,7 +30,7 @@ var count = 1;
 firebase.database().ref().child(Shop).child(shopId).child("importBill").limitToLast(100).on('child_added', snapshot => {
 	var importBill  = snapshot.val();
   	list_importBill.push(importBill);
-	table_importBill.row.add([count++, importBill.productName, importBill.quantity, accounting.formatNumber(importBill.price), importBill.time, importBill.providerName]).draw();
+	table_importBill.row.add([count++, importBill.time, importBill.productName, importBill.quantity, accounting.formatNumber(importBill.price), importBill.providerName]).draw();
   // ...
 });
 
@@ -38,6 +38,7 @@ var app = new Vue({
 	el: '#app',
 	data: {
 		selectedProduct: {},
+		salePrice: 0,
 	    products: [],
 	   	providers: [],
 	    selectedProvider: {},
@@ -56,17 +57,20 @@ var app = new Vue({
 	},
 	watch: {
 	    price: function() {
-	      	this.priceFormat = accounting.formatNumber(this.price, 2);
+	      	this.priceFormat = accounting.formatNumber(this.price);
 	    }
 	},
 	methods: {
 		loadData :function (){
 			database.ref().child(Shop).child(shopId).child("product").on('child_added', snapshot => {
 				var product = snapshot.val();
+				product.salePrice = accounting.formatNumber(product.salePrice);
+
 				this.products.push(product);
 				if(this.products.length == 1)
 				{
-					this.selectedProduct = product;
+					//this.selectedProduct = product;
+					
 				}
 					
 			});
@@ -109,7 +113,12 @@ var app = new Vue({
        			}
 		},
 		importProduct: function (){
-	
+			
+			if(this.selectedProduct == null)
+			{
+				showToastWarning("Your product is not in store");
+			}
+			else
 			if(this.selectedProduct.quantity2 > 0)
 			{
 				showToastWarning("This product is still in stock. Please check and distribute it to branches");
@@ -234,5 +243,26 @@ function getImportSampleFile()
 	alasql('SELECT * INTO XLSX("Import sample.xlsx",{headers:true}) FROM ?',[samples]);
 }
 
+
+$("#selected").on('input', function () {
+
+	app.selectedProduct = null;
+	name = document.getElementById("selected").value;
+
+    for(i = 0; i < app.products.length; i ++)
+    	if(app.products[i].name == name)
+    	{
+    		app.selectedProduct = app.products[i];
+    		break;
+    	}
+
+   	if(app.selectedProduct == null)
+   	{
+   		app.salePrice = 0;
+   	}
+   	else
+   		app.salePrice = app.selectedProduct.salePrice;
+   
+});
 
 

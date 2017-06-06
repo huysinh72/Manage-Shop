@@ -9,11 +9,10 @@ var storage = firebase.storage();
 
 var list_product = [];
 
-
 $('#table_product').DataTable({
     "columnDefs": [
-      { className: "text-right", "targets": [3,8] },
-      { className: "text-center", "targets": [4,7]}
+      { className: "text-right", "targets": [3,5,9] },
+      { className: "text-center", "targets": [4,8]}
 
     ]
 });
@@ -34,54 +33,120 @@ var dialogEdit = new Vue({
 	    currentImportPriceFormat: '',
 	    oldImportPrice: '',
 	    oldImportPriceFormat: '',
+	    reducePrice: '',
+	    reducePriceFormat: '',
+	    discount: 0,
+	    newSalePrice: 0,
 	    Product: {}
 	},
 	watch: {
 	    salePrice: function() {
-	      	this.salePriceFormat = accounting.formatNumber(this.salePrice, 2);
+	      	this.salePriceFormat = accounting.formatNumber(this.salePrice);
 	    },
 	    currentImportPrice: function() {
-	      	this.currentImportPriceFormat = accounting.formatNumber(this.currentImportPrice, 2);
+	      	this.currentImportPriceFormat = accounting.formatNumber(this.currentImportPrice);
 	    },
 	    oldImportPrice: function() {
-	      	this.oldImportPriceFormat = accounting.formatNumber(this.oldImportPrice, 2);
+	      	this.oldImportPriceFormat = accounting.formatNumber(this.oldImportPrice);
+	    },
+	    reducePrice: function() {
+	    	this.reducePriceFormat = accounting.formatNumber(this.reducePrice);
 	    }
+
+
 	},
 	methods: {
-		setProductInfo : function(){
-			this.Product.startDate = formatDateMMDDYYtoYYMMDD(document.getElementById("datepickerStart").value);
-			this.Product.endDate = formatDateMMDDYYtoYYMMDD(document.getElementById("datepickerEnd").value);  
-
-			this.Product.salePrice = parseFloat(this.salePrice);
-			this.Product.importPrice1 = parseInt(this.currentImportPrice);
-			this.Product.importPrice2 = parseInt(this.oldImportPrice);
-			this.Product.quantity1 = parseInt(this.Product.quantity1);
-			this.Product.quantity2 = parseInt(this.Product.quantity2);
-			this.Product.discount = parseInt(this.Product.discount);
+		onChangeDiscountAndReducePrice : function(){
+			tmp = parseInt(this.salePrice*(1-this.discount/100)-this.reducePrice);
+			this.newSalePrice = accounting.formatNumber(tmp);
+			if(tmp < this.currentImportPrice | tmp < this.oldImportPrice)
+				showToastWarning("Your new sale price less than import price");
+		},
+		onChangeCurrentImportPrice : function(){
+			if(this.currentImportPrice > this.salePrice)
+				showToastWarning("Your import price larger sale price");
 
 		},
+		onChangeOldImportPrice: function(){
+			if(this.oldImportPrice > this.salePrice)
+				showToastWarning("Your import price larger sale price");
 
-		loadData :function (product){
+		},
+		setProductInfo : function(){
+			this.Product.quantity1 = parseInt(this.Product.quantity1);
+			this.Product.quantity2 = parseInt(this.Product.quantity2);
+			this.Product.salePrice = parseFloat(this.salePrice);
+			this.Product.importPrice1 = parseInt(this.currentImportPrice);
+			this.Product.importPrice2 = parseInt(this.oldImportPrice);	
+		},
+		setChangeProductInfo : function(){
+			this.Product.discount = parseInt(this.discount);
+			
+			this.Product.reducePrice = parseInt(this.reducePrice);
+
+			startD = document.getElementById("datepickerStart").value;
+			if(startD != '')
+				this.Product.startDate = formatDateMMDDYYtoYYMMDD(startD);
+
+			endD = document.getElementById("datepickerEnd").value;
+			if(endD != '')
+				this.Product.endDate = formatDateMMDDYYtoYYMMDD(endD);
+		},
+
+		loadData : function (product){
 			JsBarcode('#barcode' , product.barcode);
+			
 			this.Product = product;
-			this.Product.discount = parseInt(product.discount);
+			this.Product1 = product;
+			this.discount = product.discount;
 			this.salePrice = product.salePrice;
 			this.salePriceFormat = accounting.formatNumber(product.salePrice);
 			this.currentImportPrice = product.importPrice1;
-			this.currentImportPriceFormat = accounting.formatNumber(product.importPrice1, 2);
+			this.currentImportPriceFormat = accounting.formatNumber(product.importPrice1);
 			this.oldImportPrice = product.importPrice2;
-			this.oldImportPriceFormat = accounting.formatNumber(product.importPrice2, 2);
+			this.oldImportPriceFormat = accounting.formatNumber(product.importPrice2);
+			this.reducePrice = product.reducePrice;
+			this.reducePriceFormat = accounting.formatNumber(product.reducePrice);
 
-			document.getElementById("datepickerStart").value = formatDateYYMMDDtoMMDDYY(product.startDate);
-			document.getElementById("datepickerEnd").value = formatDateYYMMDDtoMMDDYY(product.endDate);
+			document.getElementById("datepickerStart").value = '';
+			document.getElementById("datepickerEnd").value = '';
+
+			if(product.startDate != '')
+				document.getElementById("datepickerStart").value = formatDateYYMMDDtoMMDDYY(product.startDate);
+			if(product.endDate != '')
+				document.getElementById("datepickerEnd").value = formatDateYYMMDDtoMMDDYY(product.endDate);
 
 			firebase.database().ref().child(Shop).child(shopId).child("category").on('child_added', snapshot => {
 				var category  = snapshot.val();
 				this.categories.push(category);
 				if(category.id == product.categoryId)
 					this.selectedCategory = category;
-
 			});
+
+			tmp = parseInt(this.salePrice*(1-this.discount/100) - this.reducePrice);
+			this.newSalePrice = accounting.formatNumber(tmp);
+			if(app.selectedBranch.id == 1)
+			{
+				firebase.database().ref().child(Shop).child(shopId).child("branchStore").orderByChild("id").equalTo(this.Product.id).on('child_added', snapshot => {
+			      	if(snapshot.child("discount").val() != product.discount){
+			      		this.discount = '';
+			      		tmp = parseInt(this.salePrice*(1-this.discount/100) - this.reducePrice);
+						this.newSalePrice = accounting.formatNumber(tmp);
+			      	}
+		      		if(snapshot.child("reducePrice").val() != product.reducePrice)
+		      		{
+		      			this.reducePrice = '';
+		      			this.reducePriceFormat = '';
+		      			tmp = parseInt(this.salePrice*(1-this.discount/100) - this.reducePrice);
+						this.newSalePrice = accounting.formatNumber(tmp);
+		      		}
+		      		if(snapshot.child("startDate").val() != product.startDate)
+		      			document.getElementById("datepickerStart").value = '';
+	      			if(snapshot.child("endDate").val() != product.endDate)
+		      			document.getElementById("datepickerEnd").value = '';			
+				  
+				});
+			}
 
 			$('#product_image_edit').attr('src', '../image/noimageavailable.png');
 
@@ -120,8 +185,9 @@ var dialogEdit = new Vue({
 			$('#dialog').modal('hide');
 		},
 		saveChange : function (){
-
 			this.setProductInfo();
+			if(this.Product.startDate > this.Product.endDate)
+				showToastWarning("Start date discount before end date discount");
 
 			if(document.getElementById("product_file_edit").value != "")
 			{
@@ -144,9 +210,6 @@ var dialogEdit = new Vue({
 
 			if(this.disabled == 0)
 			{
-				
-				database.ref().child(Shop).child(shopId).child("product").child(this.Product.id).set(this.Product);
-
 				var branchProduct = {
 			    	id: this.Product.id,
 			    	name: this.Product.name,
@@ -155,15 +218,35 @@ var dialogEdit = new Vue({
 					categoryId : this.Product.categoryId,
 					salePrice: this.Product.salePrice,
 					productDescription: this.Product.productDescription,
-					discount: this.Product.discount,
-					startDate: this.Product.startDate,
-					endDate: this.Product.endDate,
+					discount: 0,
+					reducePrice: 0,
+					startDate: '',
+					endDate: '',
 					image: this.Product.image,
 			    	state: 'Active'
 			    }
 
-			    
+			    if(this.discount != ''){
+					branchProduct.discount = parseInt(this.discount);
+					this.Product.discount = this.discount;
+			    }
+				if(this.reducePrice != ''){
+					branchProduct.reducePrice = parseInt(this.reducePrice);
+					this.Product.reducePrice = this.reducePrice;
+				}
 
+				startD = document.getElementById("datepickerStart").value;
+				if(startD != ''){
+					branchProduct.startDate = formatDateMMDDYYtoYYMMDD(startD);
+					this.Product.startDate = formatDateMMDDYYtoYYMMDD(startD);
+				}
+
+				endD = document.getElementById("datepickerEnd").value;
+				if(endD != ''){
+					branchProduct.endDate = formatDateMMDDYYtoYYMMDD(endD);
+					this.Product.endDate = formatDateMMDDYYtoYYMMDD(endD); 
+				}
+				
 				database.ref().child(Shop).child(shopId).child("branchStore").orderByChild("id").equalTo(this.Product.id)
 				.once('value', snapshot => {
 
@@ -176,19 +259,30 @@ var dialogEdit = new Vue({
 						branchProduct.quantity2 = ss.quantity2;
 						branchProduct.importPrice1 = ss.importPrice1;
 						branchProduct.importPrice2 = ss.importPrice2;
+						if(branchProduct.discount == 0)
+							branchProduct.discount = ss.discount;
+						if(branchProduct.reducePrice == 0)
+							branchProduct.reducePrice = ss.reducePrice;
+						if(branchProduct.startDate == '')
+							branchProduct.startDate = ss.startDate;
+						if(branchProduct.endDate == '')
+							branchProduct.endDate = ss.endDate;
+
 						database.ref().child(Shop).child(shopId).child("branchStore").child(childSnapshot.key).set(branchProduct);
 					});	
 				});
+
+				database.ref().child(Shop).child(shopId).child("product").child(this.Product.id).set(this.Product);
 			}
 			else
 			{
+				this.setChangeProductInfo();
 				var branchProduct = this.Product;
 				branchProduct.saleQuantity = list_product[index].saleQuantity;
 				database.ref().child(Shop).child(shopId).child("branchStore").child(list_product[index].key).set(branchProduct);
 			}
 
 			showToastSuccess('Save successfull !!!');
-
 			list_product[index] = this.Product;
 			table_product.clear().draw();
 			var count = 1;
@@ -199,7 +293,7 @@ var dialogEdit = new Vue({
 				branchName = "Store";
 				if(app.selectedBranch.id !=1)
 					branchName = product.branchName;
-				table_product.row.add([count++, addHyperlink(product.name), product.barcode,  accounting.formatNumber(product.salePrice), product.discount,product.startDate,product.endDate,
+				table_product.row.add([count++, addHyperlink(product.name), product.barcode,  accounting.formatNumber(product.salePrice), product.discount,accounting.formatNumber(product.reducePrice), product.startDate,product.endDate,
 						product.quantity1 + product.quantity2, accounting.formatNumber(product.importPrice1), product.categoryName, branchName]).draw();
 			}
 			this.closeDialog();
@@ -233,7 +327,11 @@ var dialogEdit = new Vue({
 			$('#confirmDialog').modal('hide');
 			this.closeDialog();
 		},
-		printBarcode: function (){
+		getBarcodeNumber: function(){
+			$('#barcodeNumberDialog').modal('show');
+
+		},
+		printBarcode: function (barcodeNumber){
 
 			var img = document.getElementById("barcode");
 			var canvas = document.createElement("canvas");
@@ -248,23 +346,40 @@ var dialogEdit = new Vue({
 			var doc = new jsPDF();
 			doc.setFontSize(10);
 
-			x = 8;
-			y = 8;
-			w = 38;
-			h = 21;
-			mx = 3;
-			for(i = 0; i < 13; i++)
+			col = parseInt(barcodeNumber / 5);
+			m = 5;
+			page = parseInt(barcodeNumber / 65)+1;
+			
+			for(p = 0; p < page; p++)
 			{
+				if(p > 0)
+					doc.addPage();
 				x = 8;
-				for(j = 0; j < 5; j++)
+				y = 8;
+				w = 38;
+				h = 21;
+				mx = 3;
+				n = 13;
+				if(p == page-1)
+					n = (col-13*p)+1;
+
+				for(i = 0; i < n; i++)
 				{
-					//doc.text(x + w*j + mx, y + h*i, "" + this.Product.name);
-					doc.addImage(dataURL, 'PNG', x + w*j, y + h*i, 37, 15);
-					doc.text(x + w*j + mx, y + h*i+17, "$" + accounting.formatNumber(this.Product.salePrice));
-					x++;
-					
+					x = 8;
+					if(n < 13 & i == n-1)
+					{
+						m = barcodeNumber % 5;
+					}
+					for(j = 0; j < m; j++)
+					{
+						//doc.text(x + w*j + mx, y + h*i, "" + this.Product.name);
+						doc.addImage(dataURL, 'PNG', x + w*j, y + h*i, 37, 15);
+						doc.text(x + w*j + mx, y + h*i+17, "$" + accounting.formatNumber(this.Product.salePrice));
+						x++;
+						
+					}
+					y++;
 				}
-				y++;
 			}
 			
 			doc.output("dataurlnewwindow");
@@ -282,6 +397,20 @@ var confirmDialog = new Vue({
 	}
 })
 
+var barcodeNumberDialog = new Vue({
+	el: '#barcodeNumberDialog',
+	data: {
+		barcodeNumber: 0
+	},
+	methods: {
+		printBarcode: function(){
+			dialogEdit.printBarcode(this.barcodeNumber);
+			this.barcodeNumber = 0;
+			$('#barcodeNumberDialog').modal('hide');
+		}
+	}
+})
+
 var count;
 
 var app = new Vue({
@@ -292,7 +421,7 @@ var app = new Vue({
 	},
 	methods: {
 		loadBranches :function (){
-			var branch = {id: '0', name:'All'};
+			var branch = {id: '0', name:'Overview'};
 			this.branches.push(branch);
 			this.selectedBranch = branch;
 
@@ -311,7 +440,7 @@ var app = new Vue({
 				snapshot.forEach(function(childSnapshot) {
 			      	var product  = childSnapshot.val();
 					list_product.push(product);
-					table_product.row.add([count++, addHyperlink(product.name, all), product.barcode,  accounting.formatNumber(product.salePrice), product.discount +'%', product.startDate,product.endDate,
+					table_product.row.add([count++, addHyperlink(product.name, all), product.barcode,  accounting.formatNumber(product.salePrice), product.discount +'%', accounting.formatNumber(product.reducePrice), product.startDate,product.endDate,
 						product.quantity1 + product.quantity2, accounting.formatNumber(product.importPrice1), product.categoryName, "Store"]).draw();
 			  	});
 				
@@ -323,7 +452,7 @@ var app = new Vue({
 			      	var product  = childSnapshot.val();
 			      	product.key = childSnapshot.key;
 					list_product.push(product);
-					table_product.row.add([count++, addHyperlink(product.name, all), product.barcode,  accounting.formatNumber(product.salePrice), product.discount+'%', product.startDate,product.endDate,
+					table_product.row.add([count++, addHyperlink(product.name, all), product.barcode,  accounting.formatNumber(product.salePrice), product.discount+'%', accounting.formatNumber(product.reducePrice), product.startDate,product.endDate,
 						product.quantity1+product.quantity2, accounting.formatNumber(product.importPrice1), product.categoryName, product.branchName]).draw();
 			  	});
 			});
@@ -336,15 +465,13 @@ var app = new Vue({
 			      	var product  = childSnapshot.val();
 			      	product.key = childSnapshot.key;
 					list_product.push(product);
-					table_product.row.add([count++, addHyperlink(product.name, all), product.barcode,  accounting.formatNumber(product.salePrice), product.discount+'%', product.startDate,product.endDate,
+					table_product.row.add([count++, addHyperlink(product.name, all), product.barcode,  accounting.formatNumber(product.salePrice), product.discount+'%', accounting.formatNumber(product.reducePrice), product.startDate,product.endDate,
 						product.quantity1+product.quantity2, accounting.formatNumber(product.importPrice1), product.categoryName, product.branchName]).draw();
 			  	});
 			});
 		},
 
-
 		loadProductList: function(){
-			
 			table_product.clear().draw();
 			list_product = [];
 			count = 1;
@@ -355,7 +482,7 @@ var app = new Vue({
 			}
 			else
 			if(this.selectedBranch.id == 1)
-			{
+			{	
 				dialogEdit.disabled = 0;
 				this.loadProductStore(1);
 			}
@@ -363,8 +490,7 @@ var app = new Vue({
 			{
 				dialogEdit.disabled = 1;
 				this.loadProductBranch(1);
-			}
-			
+			}	
 		}
 	},
 	beforeMount(){
@@ -372,10 +498,8 @@ var app = new Vue({
 	}
 })
 
-
- $( "#datepickerStart" ).datepicker();
- $( "#datepickerEnd" ).datepicker();
-
+$( "#datepickerStart" ).datepicker();
+$( "#datepickerEnd" ).datepicker();
 
 $('#table_product tbody').on( 'click', 'tr', function (e) {
 	if(app.selectedBranch.id != 0)
@@ -384,11 +508,6 @@ $('#table_product tbody').on( 'click', 'tr', function (e) {
 		dialogEdit.loadData(list_product[index]);
 		$('#dialog').modal('show');
 	}
-		
-	//$('#wrapper').append('<div id="over"></div>');
-    //$('#over').fadeIn(300);
-
-	//dialog.dialog("open");
 
 });
  

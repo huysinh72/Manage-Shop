@@ -11,8 +11,6 @@ var table_employee = $('#table_employee').DataTable();
 var count = 1;
 var index = 0;
 
-
-
 var app = new Vue({
 	el: '#app',
 	data: {
@@ -115,7 +113,7 @@ var app = new Vue({
 			this.Employee.branchName = this.selectedBranch.name;
 			this.Employee.type = this.selectedType;
 			this.Employee.birthday = formatDateMMDDYYtoYYMMDD(document.getElementById("datepickerBirthday").value);
-			
+			this.Employee.password = SHA256(this.Employee.password);
 			if(this.Employee.type == 'Manager')
 			{
 				database.ref().child(Shop).child(shopId).child("branch").orderByChild("id").equalTo(this.Employee.branchId)
@@ -161,11 +159,12 @@ var dialogEdit = new Vue({
 	    states:['Active', 'Stop'],
 	    selectedState: '',
 	    image: {},
-	    Employee: {}
+	    Employee: {},
+	    newPassword:''
 	},
 	methods: {
 		loadData :function (employee){
-			
+			this.newPassword = '';
 			this.Employee = employee;
 			this.selectedType = employee.type;
 			this.selectedState = employee.state;
@@ -273,6 +272,10 @@ var dialogEdit = new Vue({
 				}
 			}
 			this.Employee.birthday = formatDateMMDDYYtoYYMMDD(document.getElementById("datepickerBirthday1").value);
+			if(this.newPassword!=''){
+				this.Employee.password = SHA256(this.newPassword);
+			}
+
 			database.ref().child(Shop).child(shopId).child("employee").child(this.Employee.id).set(this.Employee);
 			app.loadData();
 			showToastSuccess('Save successfull !!');

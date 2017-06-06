@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Shop Manager - Import</title>
+    <title>Express Shop - Import</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="../css/bootstrap.min.css" rel="stylesheet">
@@ -58,7 +58,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand custom-text" href="index.html" style="font-size:150%; color: white; margin-top: 5% "> <b> SHOP MANAGER </b></a>
+                <a class="navbar-brand custom-text" href="index.html" style="font-size:150%; color: white; margin-top: 5% "> <b> Express Shop </b></a>
 
             </div>
             <!-- Top Menu Items -->
@@ -68,7 +68,7 @@
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" id="user"><i class="fa fa-user"></i> John Smith <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li>
-                            <a href="#"><i class="fa fa-fw fa-user"></i> Profile</a>
+                            <a href="profile.html"><i class="fa fa-fw fa-user"></i> Profile</a>
                         </li>
                         <li class="divider"></li>
                         <li>
@@ -90,9 +90,7 @@
                             <li >
                                 <a href="report_revenue.html"> Revenue report  </a>
                             </li>
-                            <li>
-                                <a href="report_profit.html">Profit report</a>
-                            </li>
+                           
                             <li>
                                 <a href="report_branch.html">Branch report</a>
                             </li>
@@ -132,10 +130,10 @@
                         <a href="distribution.html"><i class="fa fa-fw fa-sitemap"></i> <b> Distribution </b></a>
                     </li>
                     <li>
-                        <a href="invoice.html"><i class="fa fa-fw fa-user"></i> <b> invoice </b> </a>
+                        <a href="invoice.html"><i class="fa fa-fw fa-user"></i> <b> Invoice </b> </a>
                     </li>
                     <li>
-                        <a href="branch_transactions.html"><i class="fa fa-fw fa-user"></i> <b> Branch transactions </b> </a>
+                        <a href="branch_transactions.html"><i class="fa fa-fw fa-user"></i> <b> Products rotation </b> </a>
                     </li>
                     <li>
                         <a href="employee.html"><i class="fa fa-fw fa-user"></i> <b> Employee </b> </a>
@@ -170,31 +168,32 @@
 
                         </div>
                        
-                        <div class="table-responsive">
+                         
+                        <div class="row">
                             <div class="panel panel-default">
                                 <div class="panel-body">
-                                    <form role="form">
-                                        <fieldset>
-                                            <table width="100%" class="table table-striped table-bordered table-hover" id="table_importFile">
-                                                <thead>
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Product</th>
-                                                        <th>Barcode</th>
-                                                        <th>Quantity</th>
-                                                        <th>Import price</th>
-                                                        <th>Provider</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    
-                                                </tbody>
-                                            </table>
-                                        </fieldset>
-                                    </form>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-bordered table-hover" id="table_importFile">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Product</th>
+                                                    <th>Barcode</th>
+                                                    <th>Quantity</th>
+                                                    <th>Import price</th>
+                                                    <th>Provider</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                  
+                      
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
@@ -213,28 +212,39 @@
                             Import products
                         </h1>
                     </div>
+
                 </div>
                 <div class="row">
                      <div class="col-lg-4">
                         <h2>Import</h2>
+                        <div class="form-group" style="text-align: right;">
+                           <a class="btn btn-info" href="add_product.html"> Add new product</a>
+                        </div>
                         <div class="panel panel-default">
                             <div class="panel-body" id="app">
                                 <form role="form" v-on:submit.prevent="importProduct">
                                     <fieldset>
                                         <div >
-                                            <form >
+                                            <form>
+                                               
                                                 <div class="form-group">
-                                                    <label>Product name</label>
-                                                    <select class="form-control" v-model="selectedProduct">
-                                                        <option v-for="product in products" :value="product">{{product.name}}</option>
-                                                    </select>
+                                                    <input class="form-control" list="selections" id="selected" placeholder="Enter product name" required>
+                                                    <datalist id="selections">
+                                                       <option v-for="product in products" :value="product.name"></option>
+                                                    </datalist>
+
+                                                </div>
+                                                
+                                                 <div class="form-group">
+                                                    <label>Sale Price</label>
+                                                     <input class="form-control" v-model="salePrice" disabled="true">
                                                 </div>
                                                 <div class="form-group">
                                                     <label>Quantity</label>
                                                      <input type="number" class="form-control" placeholder="Enter number" v-model="ImportBill.quantity" required>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label>Price</label>
+                                                    <label>Import price</label>
                                                     <input type="number" class="form-control" placeholder="Enter price" v-model="price" required>
                                                     <input class="form-control" disabled="true" v-model="priceFormat">
                                                 </div>
@@ -269,31 +279,31 @@
                     </div> 
                     <div class="col-lg-8">
                         <h2>Import history</h2>
-                        <div class="table-responsive">
+
+                        <div class="row">
                             <div class="panel panel-default">
                                 <div class="panel-body">
-                                    <form role="form">
-                                        <fieldset>
-                                            <table width="100%" class="table table-striped table-bordered table-hover" id="table_importBill">
-                                                <thead>
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Product</th>
-                                                        <th>Quantity</th>
-                                                        <th>Import price</th>
-                                                        <th>Time</th>
-                                                        <th>Provider</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    
-                                                </tbody>
-                                            </table>
-                                        </fieldset>
-                                    </form>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-bordered table-hover" id="table_importBill">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Time</th>
+                                                    <th>Product</th>
+                                                    <th>Quantity</th>
+                                                    <th>Import price</th>
+                                                    <th>Provider</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
                     </div> 
                    
                 </div>

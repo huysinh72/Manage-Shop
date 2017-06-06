@@ -8,194 +8,295 @@ var database = firebase.database();
 var currentDay = getCurrentDate();
 var currentMonth = getCurrentMonth();
 var currentYear = getCurrentYear();
-
-
-function dateDiffInDays(a, b) {
-  // Discard the time and time-zone information.
-  var date1 = new Date(a);
-    var date2 = new Date(b);
-    var timeDiff = Math.abs(date2.getTime() - date1.getTime());
-    var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
-
-  return diffDays+1;
-}
-
-var revenues = [];
+var dateOfMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+var months= [];
+var dates = [];
 var startDate = formatDateYYMMDDtoMMDDYY(currentDay);
 var endDate = formatDateYYMMDDtoMMDDYY(currentDay);
-var dateOfMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-var acc = [0.1, 0.2, 0.3, 0.4];
-var months= [];
-var monthNumberForecast = 4;
 
-function loadRevenue(startDate, endDate, diffDate)
-{
-    revenues = [];
-    sd = startDate;
-    while(diffDate > 0)
-    {
-        revenue = {};
-        revenue.Time = sd;
-        revenue.Revenue = 0;
-        revenue.Invoice = 0;
-        revenues.push(revenue);
-        sd = getNextDay(sd);
-        diffDate --;
-    }
-
-    startDate = startDate+' 00:00:00';
-    endDate = endDate + ' 24:00:00';
-    firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate).endAt(endDate).once('value', snapshot => {
-        snapshot.forEach(function(childSnapshot) {
-            
-            for(i = 0; i < revenues.length; i++)
-                if(revenues[i].Time == childSnapshot.child("time").val().substr(0, 10))
-                {
-                    revenues[i].Revenue += childSnapshot.child("salePriceTotal").val();
-                    revenues[i].Invoice ++;
-                    break;
-                }
-        });
-
-
-        for(i = 0; i < revenues.length; i++)
-            revenues[i].Time = formatDateChart(revenues[i].Time);
-
-        revenueBar.setData(revenues);
-    });
-}
-
-function searchRevenue()
-{
-    startDate = document.getElementById("datepickerStart").value;
-    endDate = document.getElementById("datepickerEnd").value;
-
-
-    if(startDate == '' | endDate == '')
-        showToastWarning("You have not entered a date yet!");
-    else
-    if(formatDateMMDDYYtoYYMMDD(startDate) > formatDateMMDDYYtoYYMMDD(endDate))
-        showToastWarning("Start date must be before end date!");
-    else
-        loadRevenue(formatDateMMDDYYtoYYMMDD(startDate), formatDateMMDDYYtoYYMMDD(endDate),  dateDiffInDays(startDate, endDate))
-   
-}
-
-
-
-function handleMonth(startDate, endDate, index)
-{
-    firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate +' 00:00:00').endAt(endDate + ' 24:00:00').once('value', snapshot => {       
-        snapshot.forEach(function(childSnapshot) {
-            
-                months[index].Revenue += childSnapshot.child("salePriceTotal").val();
-        });
+var app = new Vue({
+    el: '#app',
+    data: {
+        times:['Date', 'Month'],
+        selectedTime: '',
         
-        months[index].Time = months[index].Time + '-' + months[index].Year;
-        
-        months[monthNumberForecast].Revenue += months[index].Revenue*acc[index];
-        RevenueForecast.setData(months);
-    });
-}
-
-function loadRevenueForecast()
-{
-    m = --currentMonth;
-    y = currentYear;
-    months = [];
-    for(i = monthNumberForecast; i >=1; i --)
-    {
-        month = {};
-        month.Time = m;
-        month.Year = y;
-        month.Revenue = 0;
-        months.unshift(month); 
-        m--;
-        if(m == 0)
+    },
+    methods: {
+        loadProfitDate :function()
         {
-            m = 12; 
-            y --;
+            startDate = formatDateMMDDYYtoYYMMDD(document.getElementById("datepickerStart").value);
+            endDate = formatDateMMDDYYtoYYMMDD(document.getElementById("datepickerEnd").value);
+    
+            if(startDate > endDate)
+            {    
+                showToastWarning("Start date must be before end date!");
+                return;
+            }
+
+            diffDate = dateDiffInDays(startDate, endDate);
+           
+            dates = [];
+            sd = startDate;
+            while(diffDate > 0)
+            {
+                date = {};
+                date.Time = sd;
+                date.Revenue = 0;
+                date.Capital = 0;
+                date.Invoice = 0;
+                dates.push(date);
+                sd = getNextDay(sd);
+                diffDate --;
+            }
+         
+            firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate +' 00:00:00').endAt(endDate + ' 24:00:00').once('value', snapshot => {
+                snapshot.forEach(function(childSnapshot) {
+                    if(childSnapshot.child("state").val() == 1)
+                    for(i = 0; i < dates.length; i++)
+                        if(dates[i].Time == childSnapshot.child("time").val().substr(0,10))
+                        {
+                            
+                            dates[i].Revenue += childSnapshot.child("salePriceTotal").val();
+                            dates[i].Capital += childSnapshot.child("importPriceTotal").val();
+                            dates[i].Invoice ++;
+                            break;
+                        }
+                });
+
+                profitTotal = 0;
+                for(i = 0; i < dates.length; i++)
+                {
+                    dates[i].Time = formatDateChart(dates[i].Time);
+                    profitTotal += dates[i].Revenue;
+                }
+                
+                profitBar.setData(dates);
+                document.getElementById("profitTotal").innerHTML  = "Revenue total: <label> $"+ accounting.formatNumber(profitTotal) +"</label>";
+               
+            });
+        },
+
+        handleMonth: function(startDate, endDate, index)
+        {
+    
+            firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startDate +' 00:00:00').endAt(endDate + ' 24:00:00').once('value', snapshot => {       
+                snapshot.forEach(function(childSnapshot) {
+                        if(childSnapshot.child("state").val() == 1)
+                        {
+                            months[index].Revenue += childSnapshot.child("salePriceTotal").val();
+                            months[index].Capital += childSnapshot.child("importPriceTotal").val();
+                        }
+                          
+                });
+                
+                months[index].Profit = months[index].Revenue - months[index].Capital;
+                months[index].Time = months[index].Time + '-' + months[index].Year;
+
+                profitTotal = 0;
+
+                for(i = 0; i < 12; i++)         
+                    profitTotal += months[i].Revenue;
+                
+                
+                profitBar.setData(months);
+                document.getElementById("profitTotal").innerHTML  = "Revenue total: <label> $"+ accounting.formatNumber(profitTotal) +"</label>";
+               
+            });
+        },
+
+        loadProfitMonth: function()
+        {
+
+            m = currentMonth;
+            y = currentYear;
+            months = [];
+            for(i = 12; i >=1; i --)
+            {
+                month = {};
+                month.Time = m;
+                month.Year = y;
+                month.Revenue = 0;
+                month.Capital = 0;
+                months.unshift(month); 
+                m--;
+                if(m == 0)
+                {
+                    m = 12; 
+                    y --;
+                }
+            }
+
+            for(i = 0; i < 12 ; i++)
+            {
+                if(months[i].Time < 10)
+                    m = '0' + months[i].Time;
+
+                startDate = months[i].Year  + '/'+ m + '/' + '01';
+                endDate =  months[i].Year + '/' + m + '/' + dateOfMonth[months[i].Time];
+                this.handleMonth(startDate, endDate, i);
+                
+            }
+        },
+
+        onChangeTime: function()
+        {
+            if(this.selectedTime == 'Date')
+            {
+                document.getElementById("formDay").style.display = '';
+                setNowDate();
+                this.loadProfitDate();
+            }
+            else{
+                document.getElementById("formDay").style.display = 'none';
+                if (this.selectedTime == 'Month')
+                    this.loadProfitMonth();
+            }
+        },
+        forecastRevenue: function()
+        {
+            var forecastDates = [];
+           
+            startForecastDate = getBeforeDate(currentDay, 28);
+            endForecastDate = getNextDate(currentDay, 6);
+            dd = startForecastDate;
+            while(dd <= endForecastDate)
+            {
+                var ob = {};
+                ob.time = dd;
+                ob.revenue = 0;
+                ob.rate = 0;
+                forecastDates.push(ob);
+                dd = getNextDay(dd);
+            }
+
+            firebase.database().ref().child(Shop).child(shopId).child("invoice").orderByChild("time").startAt(startForecastDate +' 00:00:00').endAt(currentDay + ' 24:00:00').once('value', snapshot => {       
+                snapshot.forEach(function(childSnapshot) {
+                        if(childSnapshot.child("state").val() == 1)
+                        {
+                            t = childSnapshot.child("time").val();
+                            t = t.slice(0, 10);
+                            for(i = 0; i < forecastDates.length-7; i++)
+                                if(t == forecastDates[i].time)
+                                {
+                                    forecastDates[i].revenue += childSnapshot.child("salePriceTotal").val();
+                                    break;
+                                }
+                        }    
+                });
+
+                var dataForecast = [];
+                le = forecastDates.length-1;
+                for(i = le; i > le-7; i--)
+                {
+                    rate = 1;
+                    for(j = 4; j >= 1; j--)
+                    {
+                        if(forecastDates[i-j*7].revenue > 0)
+                        {
+                            forecastDates[i-j*7].rate = rate++;
+                            forecastDates[i].rate += rate-1;
+                        }
+                    }
+
+                    for(j = 4; j >= 1; j--)
+                    {
+                        if(forecastDates[i-j*7].revenue > 0)
+                            forecastDates[i].revenue += forecastDates[i-j*7].revenue*forecastDates[i-j*7].rate/forecastDates[i].rate;
+                    }
+
+                    forecastDates[i].revenue = parseInt(forecastDates[i].revenue);
+                    dataForecast.unshift(forecastDates[i]);
+                }
+
+                for(i = 0; i< dataForecast.length; i++)
+                    dataForecast[i].time = formatDateChart(dataForecast[i].time);
+
+                forecastBar.setData(dataForecast);
+            });
         }
-    }
-
-    month = {};
-    month.Time = 'Forecast';
-    month.Revenue = 0;
-    months.push(month);
-
-
-    for(i = 0; i < monthNumberForecast; i++)
-    {
-        if(months[i].Time < 10)
-            m = '0' + months[i].Time;
-
-        startDate = months[i].Year  + '/'+ m + '/' + '01';
-        endDate =  months[i].Year + '/' + m + '/' + dateOfMonth[months[i].Time];
-        this.handleMonth(startDate, endDate, i);
+    },
+    beforeMount(){
+        this.selectedTime = this.times[0];
+        setNowDate();
+        this.loadProfitDate();
+        this.forecastRevenue();
         
     }
+})
+
+$( "#datepickerStart").datepicker();
+$( "#datepickerEnd").datepicker();
+setNowDate();
+function setNowDate()
+{
+    document.getElementById("datepickerStart").value = formatDateYYMMDDtoMMDDYY(currentDay);
+    document.getElementById("datepickerEnd").value = formatDateYYMMDDtoMMDDYY(currentDay);
 }
 
-
- $( "#datepickerStart" ).datepicker();
- $( "#datepickerEnd" ).datepicker();
-
-
-document.getElementById("datepickerStart").value = startDate;
-document.getElementById("datepickerEnd").value = endDate;
-loadRevenue(currentDay, currentDay, 1);
-loadRevenueForecast();
-
-var revenueBar = Morris.Line({
-        // ID of the element in which to draw the chart.
-    element: 'morris-line-chart-revenue',
-    // Chart data records -- each entry in this array corresponds to a point on
-    // the chart.
-    data: [{
-        Time: '',
-        Revenue: 0
-    } ],
-    // The name of the data record attribute that contains x-visitss.
-    xkey: 'Time',
-    // A list of names of data record attributes that contain y-visitss.
-    ykeys: ['Revenue'],
-    // Labels for the ykeys -- will be displayed when you hover over the
-    // chart.
-    labels: ['Revenue'],
-    // Disables line smoothing
-    smooth: false,
-    lineWidth: 5,
-    lineColors: ['#5cb85c', '#337ab7', '#d9534f', '#afd8f8', '#edc240', '#cb4b4b', '#9440ed'],
-    pointFillColors: ['#337ab7'],
-    pointSize: 7,
-    parseTime: false,
-    resize: true
-});
-
-
-var RevenueForecast = Morris.Bar({
+var profitBar = Morris.Bar({
     element: 'morris-bar-chart',
     data: [{
         Time: '',
+        Capital: 0,
         Revenue: 0
     }],
     xkey: 'Time',
-    ykeys: ['Revenue'],
-    labels: ['Revenue'],
+    ykeys: ['Capital','Revenue'],
+    labels: ['Capital','Revenue'],
     barRatio: 0.4,
-    xLabelAngle: 10,
-    barColors: function(row, series, type) {
-        if (row.x == 4) return '#d9534f';
-        else
-            return '#5cb85c';
-    },
+    xLabelAngle: 50,
+    barColors: ['#5cb85c', '#d9534f', '#d9534f', '#afd8f8', '#edc240', '#cb4b4b', '#9440ed'],
     hideHover: 'auto',
     resize: true
 });
-   
+
+
+var forecastBar = Morris.Bar({
+    element: 'forecast-bar-chart',
+    data: [{
+        time: '',
+        revenue: 0
+    }],
+    xkey: 'time',
+    ykeys: ['revenue'],
+    labels: ['Revenue'],
+    barRatio: 0.4,
+    xLabelAngle: 50,
+    barColors: ['#d9534f', '#d9534f', '#d9534f', '#afd8f8', '#edc240', '#cb4b4b', '#9440ed'],
+    hideHover: 'auto',
+    resize: true
+});
+
 function exportExcel()
 {
-    var filename = '"Revenue report - ' + getCookie("shopName") + ' - ' + startDate + ' - ' + endDate +'.xlsx"';
-    alasql('SELECT * INTO XLSX('+ filename +',{headers:true}) FROM ?',[revenues]);
+    if(app.selectedTime == 'Date')
+    {
+        var filename = '"Revenue report - ' + getCookie("shopName") + ' - ' + startDate + ' - ' + endDate +'.xlsx"';
+    
+        alasql('SELECT * INTO XLSX('+ filename +',{headers:true}) FROM ?',[dates]);
+    }
+    else
+    {
+        data = [];
+        for(i = 0; i< months.length; i++)
+        {
+            m = {};
+            m.Time = months[i].Time;
+            m.Revenue = months[i].Revenue;
+            m.Capital = months[i].Capital;
+            data.push(m);
+
+        }
+
+        var filename = '"Revenue report - ' + getCookie("shopName") + ' - Month.xlsx"';
+    
+        alasql('SELECT * INTO XLSX('+ filename +',{headers:true}) FROM ?',[data]);
+    }
 }
+
+
+
+
+   
+   
 

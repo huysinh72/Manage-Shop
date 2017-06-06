@@ -33,17 +33,16 @@ function loadData(startDate, endDate)
             category.Category = childSnapshot.child("name").val();
             category.Revenue = 0;
             category.Capital = 0;
-            category.Profit = 0;
             category.Invoice = 0;
             categories.push(category); 
         });
         firebase.database().ref().child(Shop).child(shopId).child("invoiceDetail").orderByChild("time").startAt(startDate).endAt(endDate).once('value', snapshot => {
             snapshot.forEach(function(childSnapshot) {
-
+                if(childSnapshot.child("state").val() == 0)
                 for(i = 0; i< categories.length; i++)
                     if(childSnapshot.child("category").val() == categories[i].Category)
                     {
-                        categories[i].Revenue += childSnapshot.child("salePrice").val();
+                        categories[i].Revenue += childSnapshot.child("salePrice").val()*childSnapshot.child("saleQuantity").val();
                         categories[i].Capital += childSnapshot.child("importPrice1").val()*childSnapshot.child("quantity1").val() +
                                             childSnapshot.child("importPrice2").val()*childSnapshot.child("quantity2").val();
                         categories[i].Invoice ++;
@@ -51,8 +50,6 @@ function loadData(startDate, endDate)
                     }
             });
 
-            for(i = 0; i< categories.length; i++)
-                categories[i].Profit = categories[i].Revenue - categories[i].Capital;
             count = 1;
             table_category.clear().draw();
             categories.sort(function(a, b) {
@@ -94,15 +91,14 @@ var categoryBar = Morris.Bar({
             Category: '',
             Capital: 0,
             Revenue: 0,
-            Profit: 0
         }],
         xkey: 'Category',
-        ykeys: ['Capital','Revenue','Profit' ],
-        labels: ['Capital','Revenue','Profit'],
+        ykeys: ['Capital','Revenue'],
+        labels: ['Capital','Revenue'],
         barRatio: 0.4,
-        xLabelAngle: 10,
+        xLabelAngle: 50,
         hideHover: 'auto',
-        barColors: ['#337ab7', '#5cb85c', '#d9534f', '#afd8f8', '#edc240', '#cb4b4b', '#9440ed'],
+        barColors: ['#5cb85c', '#d9534f', '#d9534f', '#afd8f8', '#edc240', '#cb4b4b', '#9440ed'],
         resize: true
 });
 
