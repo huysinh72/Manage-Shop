@@ -13,7 +13,6 @@ $('#table_product').DataTable({
     "columnDefs": [
       { className: "text-right", "targets": [3,5,9] },
       { className: "text-center", "targets": [4,8]}
-
     ]
 });
 
@@ -40,20 +39,29 @@ var dialogEdit = new Vue({
 	    Product: {}
 	},
 	watch: {
-	    salePrice: function() {
-	      	this.salePriceFormat = accounting.formatNumber(this.salePrice);
+	    salePriceFormat: function() {
+	    	tmp = formatMoneyToInt(this.salePriceFormat);
+	      	this.salePriceFormat = accounting.formatNumber(tmp);
+	      	this.salePrice = tmp;
 	    },
-	    currentImportPrice: function() {
-	      	this.currentImportPriceFormat = accounting.formatNumber(this.currentImportPrice);
+	    currentImportPriceFormat: function() {
+	    	tmp = formatMoneyToInt(this.currentImportPriceFormat);
+	      	this.currentImportPriceFormat = accounting.formatNumber(tmp);
+	      	this.currentImportPrice = tmp;
 	    },
-	    oldImportPrice: function() {
-	      	this.oldImportPriceFormat = accounting.formatNumber(this.oldImportPrice);
+	    oldImportPriceFormat: function() {
+	    	tmp = formatMoneyToInt(this.oldImportPriceFormat);
+	      	this.oldImportPriceFormat = accounting.formatNumber(tmp);
+	      	this.oldImportPrice = tmp;
+
 	    },
-	    reducePrice: function() {
-	    	this.reducePriceFormat = accounting.formatNumber(this.reducePrice);
+	    reducePriceFormat: function() {
+	    	tmp = formatMoneyToInt(this.reducePriceFormat);
+	    	this.reducePriceFormat = accounting.formatNumber(tmp);
+	    	this.reducePrice = tmp;
+	    	if(tmp == 0)
+	    		this.reducePriceFormat = '';
 	    }
-
-
 	},
 	methods: {
 		onChangeDiscountAndReducePrice : function(){
@@ -125,20 +133,19 @@ var dialogEdit = new Vue({
 
 			tmp = parseInt(this.salePrice*(1-this.discount/100) - this.reducePrice);
 			this.newSalePrice = accounting.formatNumber(tmp);
+
 			if(app.selectedBranch.id == 1)
 			{
 				firebase.database().ref().child(Shop).child(shopId).child("branchStore").orderByChild("id").equalTo(this.Product.id).on('child_added', snapshot => {
 			      	if(snapshot.child("discount").val() != product.discount){
 			      		this.discount = '';
-			      		tmp = parseInt(this.salePrice*(1-this.discount/100) - this.reducePrice);
-						this.newSalePrice = accounting.formatNumber(tmp);
+			      		this.newSalePrice = '';
 			      	}
 		      		if(snapshot.child("reducePrice").val() != product.reducePrice)
 		      		{
 		      			this.reducePrice = '';
 		      			this.reducePriceFormat = '';
-		      			tmp = parseInt(this.salePrice*(1-this.discount/100) - this.reducePrice);
-						this.newSalePrice = accounting.formatNumber(tmp);
+		      			this.newSalePrice = '';
 		      		}
 		      		if(snapshot.child("startDate").val() != product.startDate)
 		      			document.getElementById("datepickerStart").value = '';
@@ -185,6 +192,7 @@ var dialogEdit = new Vue({
 			$('#dialog').modal('hide');
 		},
 		saveChange : function (){
+
 			this.setProductInfo();
 			if(this.Product.startDate > this.Product.endDate)
 				showToastWarning("Start date discount before end date discount");
@@ -483,11 +491,19 @@ var app = new Vue({
 			else
 			if(this.selectedBranch.id == 1)
 			{	
+				document.getElementById("discountId").style.backgroundColor = '#CCC';
+				document.getElementById("reducePriceFormatId").style.backgroundColor = '#CCC';
+				document.getElementById("datepickerStart").style.backgroundColor = '#CCC';
+				document.getElementById("datepickerEnd").style.backgroundColor = '#CCC';
 				dialogEdit.disabled = 0;
 				this.loadProductStore(1);
 			}
 			else
 			{
+				document.getElementById("discountId").style.backgroundColor = '#FFF';
+				document.getElementById("reducePriceFormatId").style.backgroundColor = '#FFF';
+				document.getElementById("datepickerStart").style.backgroundColor = '#FFF';
+				document.getElementById("datepickerEnd").style.backgroundColor = '#FFF';
 				dialogEdit.disabled = 1;
 				this.loadProductBranch(1);
 			}	

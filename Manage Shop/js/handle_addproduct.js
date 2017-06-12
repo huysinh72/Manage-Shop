@@ -37,8 +37,10 @@ var app = new Vue({
 	    }
 	},
 	watch: {
-	    salePrice: function() {
-	      	this.salePriceFormat = accounting.formatNumber(this.salePrice);
+	    salePriceFormat: function() {
+	    	tmp = formatMoneyToInt(this.salePriceFormat);
+	      	this.salePriceFormat = accounting.formatNumber(tmp);
+	      	this.salePrice = tmp;
 	    }
 	},
 	methods: {

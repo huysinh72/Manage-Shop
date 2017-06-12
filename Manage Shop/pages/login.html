@@ -36,14 +36,12 @@
 
 </head>
 
-<body>
+<body style="background-image: url(../image/background.png); background-position: center;">
 
-    <div class="container">
+    <div>
         <a class="custom-text" href="index.html" style="color: white; text-align: center;"><h1><b>Express Shop</b></h1></a>
         <br>
-
-        <div class="row">
-            <div class="col-lg-6 col-md-6 col-sm-12 col-lg-offset-3 col-md-offset-3">
+            <div class="col-lg-6 col-md-6 col-sm-12 col-ms-6 col-lg-offset-3 col-md-offset-3">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h3 class="panel-title"><b>Login</b></h3>
@@ -52,10 +50,10 @@
                         <form id="form" v-on:submit.prevent="login(password)">
                             <fieldset>
                                 <div class="form-group">
-                                    <input class="form-control" placeholder="Email address" name="email" type="email" v-model="email" required data-validation-required-message="">
+                                    <input class="form-control" placeholder="Email address" name="email" type="email" v-model="email" required>
                                 </div>
                                 <div class="form-group">
-                                    <input class="form-control" placeholder="Password" name="password" type="password" v-model="password" required data-validation-required-message="">
+                                    <input class="form-control" placeholder="Password" name="password" type="password" v-model="password" required>
                                 </div>
                                 <div class="checkbox">
                                     <label>
@@ -70,8 +68,9 @@
                     </div>
                 </div>
             </div>
-        </div>
+       
     </div>
+   
 
     <!-- jQuery -->
    <script src="../js/jquery.js"></script>

@@ -14,12 +14,12 @@ var app = new Vue({
     login: function (password) {
 
       firebase.database().ref().child(User).orderByChild("email").equalTo(this.email).once('value', snapshot => {
-
+          check = 0;
           snapshot.forEach(function(childSnapshot) {
+            check = 1;
             var user  = childSnapshot.val();
             if(user.password != SHA256(password)){
-              alert(SHA256(password));
-              showToastWarning("Wrong password");
+              showToastWarning("Your password was wrong");
             }
             else
             {
@@ -30,6 +30,8 @@ var app = new Vue({
               
             }
           });
+          if (check == 0)
+            showToastWarning("Your email was wrong");
           
       });  	
     }

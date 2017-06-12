@@ -7,7 +7,7 @@ function showToastSuccess(content)
 	$.toast({
 		heading: 'SUCCESS',
 	    text: content,
-	    position: 'bottom-left',
+	    position: 'bottom-center',
 	    icon: 'success',
 	    loaderBg: '#337ab7' 
 	});
@@ -18,7 +18,7 @@ function showToastWarning(content)
 	$.toast({
 		heading: 'WARNING',
 	    text: content,
-	    position: 'bottom-left',
+	    position: 'top-center',
 	    icon: 'warning',
 	    loaderBg: '#337ab7' 
 	});
@@ -178,9 +178,6 @@ function generateListBarcode(n)
 		});
 }
 
-
-
-
 function formatDateMMDDYYtoYYMMDD (date)
 {
 	return date.slice(6, 10) + '/' + date.slice(0, 2) + '/' + date.slice(3, 5);
@@ -205,4 +202,9 @@ function addHyperlink(name, check)
 		return '<a>'+ name +'</a>';
 	else
 		return name;
+}
+
+function formatMoneyToInt(money)
+{
+	return money.replace(/,/g,'');
 }

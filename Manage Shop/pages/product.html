@@ -181,8 +181,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Sale Price</label>
-                                        <input type="text" class="form-control" placeholder="Enter price" v-model="salePrice" :disabled="disabled == 1 ? true : false" required>
-                                        <input class="form-control" disabled="true" v-model="salePriceFormat">
+                                        <input type="text" class="form-control" placeholder="Enter price" v-model="salePriceFormat" :disabled="disabled == 1 ? true : false" required>
                                     </div>
                                     <div class="form-group">
                                         <label>Recent quantity</label>
@@ -190,8 +189,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Recent import price</label>
-                                        <input class="form-control" placeholder="Enter price" v-model="currentImportPrice" v-on:change="onChangeCurrentImportPrice" required>
-                                        <input class="form-control" disabled="true" v-model="currentImportPriceFormat">
+                                        <input class="form-control" placeholder="Enter price" v-model="currentImportPriceFormat" v-on:change="onChangeCurrentImportPrice" required>
                                     </div>
                                     <div class="form-group">
                                         <label>Old quantity</label>
@@ -199,50 +197,48 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Old import price</label>
-                                        <input class="form-control" placeholder="Enter quantity" v-model="oldImportPrice" v-on:change="onChangeOldImportPrice" required>
-                                        <input class="form-control" disabled="true" v-model="oldImportPriceFormat">
+                                        <input class="form-control" placeholder="Enter quantity" v-model="oldImportPriceFormat" v-on:change="onChangeOldImportPrice" required>
                                     </div>
-                                   
+                                    <div class="form-group">
+                                        <label>Description</label>
+                                        <textarea class="form-control" rows="4" v-model="Product.productDescription" required :disabled="disabled == 1 ? true : false"></textarea>
+                                    </div>
                                 </div>
                                 <div class="col-lg-6 col-md-6">
 
                                     <div class="form-group">
                                         <label>Discount (%)</label>
-                                        <input type="number" class="form-control" style="background-color: #CCCCCC" placeholder="Store and branch have diffrent value" v-model="discount" v-on:change="onChangeDiscountAndReducePrice">
+                                        <input type="number" class="form-control" id="discountId" style="background-color: #CCCCCC" placeholder="Branches have diffrent value" v-model="discount" v-on:change="onChangeDiscountAndReducePrice">
                                     </div>
                                     <div class="form-group">
                                         <label>Reduce price</label>
-                                        <input class="form-control" style="background-color: #CCCCCC" placeholder="Store and branch have diffrent value" v-model="reducePrice" v-on:change="onChangeDiscountAndReducePrice">
-                                        <input class="form-control" disabled="true" v-model="reducePriceFormat">
+                                        <input class="form-control" id="reducePriceFormatId" style="background-color: #CCCCCC" placeholder="Branches have diffrent value" v-model="reducePriceFormat" v-on:change="onChangeDiscountAndReducePrice">
                                     </div>
                                     <div class="form-group">
-                                        <label>New sale price (salePrice*(1-discount) - reducePrice)</label>
-                                        <input class="form-control" v-model="newSalePrice" disabled="true" required>
+                                        <label>New sale price = salePrice*(1-discount) - reducePrice</label>
+                                        <input class="form-control" v-model="newSalePrice" disabled="true" required placeholder="Undefined">
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12 col-lg-6">
                                             <div class="form-group">
                                                 <label>Start date</label>
-                                                <input type="text" class="form-control" style="background-color: #CCCCCC" id="datepickerStart">
+                                                <input type="text" class="form-control" style="background-color: #CCCCCC" id="datepickerStart" placeholder="Branches have diffrent value">
                                             </div>  
                                         </div>
 
                                         <div class="col-sm-12 col-lg-6">
                                             <div class="form-group">
                                                 <label>End date</label> 
-                                                <input type="text" class="form-control"  style="background-color: #CCCCCC" id="datepickerEnd">
+                                                <input type="text" class="form-control"  style="background-color: #CCCCCC" id="datepickerEnd" placeholder="Branches have diffrent value">
                                             </div> 
                                         </div>
                                     </div> 
                                     <div class="form-group">
                                         <label>Product image</label>
                                         <input type="file" id="product_file_edit" v-on:change="onFileChange" :disabled="disabled == 1 ? true : false">
-                                        <img src="../image/noimageavailable.png" alt="HTML5 Icon" width="200" height="200" id="product_image_edit">
+                                        <img src="../image/noimageavailable.png" alt="HTML5 Icon" width="360" height="360" id="product_image_edit">
                                     </div>
-                                     <div class="form-group">
-                                        <label>Description</label>
-                                        <textarea class="form-control" rows="4" v-model="Product.productDescription" required :disabled="disabled == 1 ? true : false"></textarea>
-                                    </div>
+                                    
                                 </div>
                             </div>
                         </div>
